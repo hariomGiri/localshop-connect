@@ -1,0 +1,269 @@
+classDiagram
+    class User {
+        +string id
+        +string email
+        +string phone
+        +string passwordHash
+        +string firstName
+        +string lastName
+        +string role
+        +Date createdAt
+        +Date updatedAt
+        +bool isVerified
+        +bool isActive
+        +register(userData: UserRegistrationData): User
+        +login(credentials: LoginCredentials): AuthResponse
+        +updateProfile(profile: UserProfile): User
+        +resetPassword(token: string, password: string): void
+    }
+    
+    class Customer {
+        +Array~Address~ addresses
+        +Array~Order~ orders
+        +Array~Product~ wishlist
+        +addAddress(address: Address): Address
+        +placeOrder(orderData: OrderInput): Order
+        +addToWishlist(productId: string): void
+        +leaveReview(productId: string, review: ReviewInput): Review
+    }
+    
+    class Shopkeeper {
+        +Shop shop
+        +createShop(shopData: ShopRegistrationData): Shop
+        +updateShop(shopData: Partial~ShopProfile~): Shop
+        +addProduct(product: ProductInput): Product
+        +manageOrders(orderId: string, action: string): Order
+    }
+    
+    class Admin {
+        +approveShop(shopId: string): Shop
+        +moderateContent(contentId: string, action: string): void
+        +manageUsers(userId: string, action: string): User
+        +generateReports(): Report
+        +configurePlatform(settings: PlatformSettings): void
+    }
+    
+    class DeliveryPartner {
+        +string vehicleType
+        +GeoLocation currentLocation
+        +Array~Order~ assignedDeliveries
+        +updateLocation(location: GeoLocation): void
+        +acceptDelivery(orderId: string): Order
+        +updateDeliveryStatus(orderId: string, status: DeliveryStatus): Order
+        +completeDelivery(orderId: string, proof: DeliveryProof): Order
+    }
+    
+    class Shop {
+        +string id
+        +string name
+        +string description
+        +string logo
+        +string coverImage
+        +Address address
+        +GeoLocation location
+        +Array~OperatingHours~ hours
+        +DeliverySettings deliverySettings
+        +string status
+        +Date createdAt
+        +bool isVerified
+        +ShopSettings settings
+        +addProduct(product: ProductInput): Product
+        +updateProfile(profile: ShopProfile): Shop
+        +manageInventory(inventoryData: InventoryUpdate): void
+        +createPromotion(promotion: PromotionInput): Promotion
+    }
+    
+    class Product {
+        +string id
+        +string title
+        +string description
+        +number price
+        +number discountPrice
+        +number stockQuantity
+        +Array~string~ images
+        +string category
+        +Array~string~ tags
+        +Shop shop
+        +bool isAvailable
+        +Array~ProductAttribute~ attributes
+        +Date createdAt
+        +updateDetails(details: Partial~ProductInput~): Product
+        +updateStock(quantity: number): Product
+        +setPromotion(promotion: Promotion): Product
+        +getReviews(): Array~Review~
+    }
+    
+    class Order {
+        +string id
+        +Customer customer
+        +Shop shop
+        +Array~OrderItem~ items
+        +number subtotal
+        +number tax
+        +number deliveryFee
+        +number total
+        +string paymentMethod
+        +string paymentStatus
+        +string orderStatus
+        +string fulfillmentType
+        +Address deliveryAddress
+        +DateTime deliveryTime
+        +DeliveryPartner deliveryPartner
+        +Date createdAt
+        +updateStatus(status: OrderStatus): Order
+        +processPayment(paymentMethod: string): Payment
+        +assignDelivery(partnerId: string): Order
+        +calculateTotal(): number
+    }
+    
+    class OrderItem {
+        +string id
+        +Product product
+        +number quantity
+        +number price
+        +number subtotal
+        +Array~string~ customizations
+    }
+    
+    class Payment {
+        +string id
+        +Order order
+        +number amount
+        +string currency
+        +string status
+        +string provider
+        +string transactionId
+        +Date createdAt
+        +processRefund(amount: number): RefundResult
+        +updateStatus(status: string): Payment
+        +getReceipt(): string
+    }
+    
+    class Review {
+        +string id
+        +Customer customer
+        +Product product
+        +Shop shop
+        +number rating
+        +string comment
+        +Array~string~ images
+        +Date createdAt
+        +bool isVerified
+        +void report(reason: string): void
+        +void respond(comment: string): void
+    }
+    
+    class Promotion {
+        +string id
+        +Shop shop
+        +string title
+        +string description
+        +string type
+        +number value
+        +Array~Product~ applicableProducts
+        +Date startDate
+        +Date endDate
+        +bool isActive
+        +activate(): void
+        +deactivate(): void
+        +applyToProduct(productId: string): Product
+    }
+    
+    class Category {
+        +string id
+        +string name
+        +string description
+        +string image
+        +Category parent
+        +Array~Category~ children
+        +getProducts(): Array~Product~
+    }
+    
+    class Address {
+        +string id
+        +string label
+        +string addressLine1
+        +string addressLine2
+        +string city
+        +string state
+        +string postalCode
+        +string country
+        +GeoLocation coordinates
+        +string landmark
+        +string instructions
+        +getCoordinates(): GeoLocation
+    }
+    
+    class Notification {
+        +string id
+        +string userId
+        +string type
+        +string title
+        +string message
+        +string linkTo
+        +bool isRead
+        +Date createdAt
+        +markAsRead(): void
+        +send(): void
+    }
+    
+    class Analytics {
+        +getShopAnalytics(shopId: string, period: string): ShopAnalytics
+        +getPlatformStats(): PlatformStats
+        +getUserEngagement(): EngagementMetrics
+        +getSalesReport(filters: ReportFilters): SalesReport
+    }
+    
+    class GeoService {
+        +findNearbyShops(location: GeoLocation, radius: number): Array~Shop~
+        +calculateDistance(origin: GeoLocation, destination: GeoLocation): number
+        +optimizeRoute(points: Array~GeoLocation~): OptimizedRoute
+        +geocodeAddress(address: Address): GeoLocation
+    }
+    
+    class SearchService {
+        +searchProducts(query: string, filters: ProductFilters): SearchResults
+        +searchShops(query: string, filters: ShopFilters): SearchResults
+        +getRecommendations(userId: string): Array~Product~
+        +getPopularProducts(location: GeoLocation): Array~Product~
+    }
+    
+    class PaymentGateway {
+        +createPaymentIntent(orderId: string, amount: number): PaymentSession
+        +processPayment(sessionId: string, paymentMethod: string): PaymentResult
+        +issueRefund(paymentId: string, amount: number): RefundResult
+        +getPaymentStatus(paymentId: string): string
+    }
+    
+    User <|-- Customer
+    User <|-- Shopkeeper
+    User <|-- Admin
+    User <|-- DeliveryPartner
+    
+    Shopkeeper "1" -- "1" Shop : manages
+    Shop "1" -- "*" Product : offers
+    Shop "1" -- "*" Promotion : creates
+    Shop "1" -- "*" Order : receives
+    
+    Customer "1" -- "*" Order : places
+    Customer "1" -- "*" Review : writes
+    Customer "1" -- "*" Address : has
+    
+    Order "1" -- "*" OrderItem : contains
+    Order "1" -- "1" Payment : has
+    Order "1" -- "0..1" DeliveryPartner : assigned to
+    
+    Product "1" -- "*" Review : receives
+    Product "*" -- "*" Category : belongs to
+    
+    Analytics -- Shop : analyzes
+    Analytics -- Order : processes
+    Analytics -- Customer : tracks
+    
+    GeoService -- Shop : locates
+    GeoService -- DeliveryPartner : tracks
+    
+    SearchService -- Product : indexes
+    SearchService -- Shop : indexes
+    
+    PaymentGateway -- Payment : processes

@@ -1,0 +1,206 @@
+
+    participant C as Customer
+    participant S as Shopkeeper
+    participant CA as Customer App
+    participant SA as Shop Dashboard
+    participant AG as API Gateway
+    participant AuthS as Auth Service
+    participant US as User Service
+    participant SS as Shop Service
+    participant PS as Product Service
+    participant OS as Order Service
+    participant PayS as Payment Service
+    participant DS as Delivery Service
+    participant NS as Notification Service
+    participant DB as Databases
+    participant Maps as Google Maps API
+    participant PG as Payment Gateway
+    
+    %% User Registration and Authentication
+    C->>CA: Register as customer
+    CA->>AG: POST /auth/register
+    AG->>AuthS: Create user account
+    AuthS->>DB: Store user data
+    DB-->>AuthS: Confirm storage
+    AuthS->>NS: Request verification email
+    NS-->>C: Send verification email
+    AuthS-->>AG: Return user data + token
+    AG-->>CA: Return registration success
+    CA-->>C: Display confirmation
+    
+    %% Shop Registration
+    S->>SA: Register shop
+    SA->>AG: POST /shops/register
+    AG->>AuthS: Validate shopkeeper token
+    AuthS-->>AG: Token valid
+    AG->>SS: Create shop profile
+    SS->>DB: Store shop data
+    DB-->>SS: Confirm storage
+    SS-->>AG: Return pending approval status
+    AG-->>SA: Return registration success
+    SA-->>S: Display pending approval
+    
+    %% Admin Approval of Shop
+    Note over AG,SS: Admin approves shop via admin panel
+    SS->>DB: Update shop status to approved
+    SS->>NS: Shop approved notification
+    NS-->>S: Send approval notification
+    
+    %% Product Management
+    S->>SA: Add new product
+    SA->>AG: POST /products
+    AG->>AuthS: Validate shopkeeper token
+    AuthS-->>AG: Token valid
+    AG->>PS: Create product
+    PS->>DB: Store product data
+    PS->>DB: Update inventory
+    DB-->>PS: Confirm storage
+    PS-->>AG: Return product data
+    AG-->>SA: Display product added
+    SA-->>S: Show success message
+    
+    %% Customer Searches Products
+    C->>CA: Search for "organic milk"
+    CA->>AG: GET /products/search?q=organic+milk
+    AG->>PS: Query products
+    PS->>DB: Find matching products
+    DB-->>PS: Return product list
+    PS-->>AG: Return search results
+    AG-->>CA: Display search results
+    CA-->>C: Show product listings
+    
+    %% Location-Based Search
+    C->>CA: Enable location sharing
+    CA->>Maps: Get current coordinates
+    Maps-->>CA: Return location data
+    CA->>AG: GET /shops/nearby?lat=x&lng=y
+    AG->>SS: Find shops near coordinates
+    SS->>DB: Geospatial query for shops
+    DB-->>SS: Return nearby shops
+    SS-->>AG: Return shop list
+    AG-->>CA: Display nearby shops
+    CA-->>C: Show shops on map
+    
+    %% Product Comparison
+    C->>CA: Compare product across shops
+    CA->>AG: GET /products/compare?ids=id1,id2,id3
+    AG->>PS: Get product details
+    PS->>DB: Query products by IDs
+    DB-->>PS: Return product details
+    PS-->>AG: Return comparison data
+    AG-->>CA: Display comparison view
+    CA-->>C: Show side-by-side comparison
+    
+    %% Order Placement
+    C->>CA: Add product to cart
+    C->>CA: Proceed to checkout
+    CA->>AG: POST /orders
+    AG->>AuthS: Validate customer token
+    AuthS-->>AG: Token valid
+    AG->>OS: Create order
+    OS->>DB: Save order details
+    DB-->>OS: Confirm storage
+    OS->>PayS: Initialize payment
+    PayS->>PG: Create payment intent
+    PG-->>PayS: Return payment session
+    PayS-->>OS: Return payment link
+    OS-->>AG: Return order with payment
+    AG-->>CA: Redirect to payment
+    CA-->>C: Show payment options
+    
+    %% Payment Processing
+    C->>CA: Submit payment
+    CA->>PG: Process payment
+    PG-->>CA: Payment confirmation
+    CA->>AG: PUT /orders/{id}/payment
+    AG->>PayS: Confirm payment
+    PayS->>PG: Verify transaction
+    PG-->>PayS: Transaction verified
+    PayS->>DB: Update payment status
+    PayS->>OS: Payment completed
+    OS->>DB: Update order status
+    OS->>NS: Order confirmation notification
+    NS-->>C: Send order confirmation
+    NS-->>S: Send new order notification
+    OS-->>AG: Return updated order
+    AG-->>CA: Show order confirmation
+    CA-->>C: Display order details
+    
+    %% Order Management by Shop
+    S->>SA: View new order
+    SA->>AG: GET /shops/orders
+    AG->>AuthS: Validate shopkeeper token
+    AuthS-->>AG: Token valid
+    AG->>OS: Get shop's orders
+    OS->>DB: Query orders by shopId
+    DB-->>OS: Return order list
+    OS-->>AG: Return orders
+    AG-->>SA: Display orders
+    SA-->>S: Show pending orders
+    S->>SA: Accept order
+    SA->>AG: PUT /orders/{id}/status
+    AG->>OS: Update order status
+    OS->>DB: Update status in database
+    OS->>NS: Status change notification
+    NS-->>C: Send order accepted notification
+    OS-->>AG: Return updated order
+    AG-->>SA: Show confirmation
+    SA-->>S: Display updated order
+    
+    %% Delivery Assignment
+    Note over OS,DS: Order ready for delivery
+    OS->>DS: Request delivery partner
+    DS->>DB: Find available delivery partners
+    DB-->>DS: Return available partners
+    DS->>NS: Send delivery request notification
+    NS-->DeliveryPartner: Notify about delivery request
+    DeliveryPartner->>DS: Accept delivery request
+    DS->>DB: Update assignment
+    DS->>OS: Confirm delivery assignment
+    OS->>NS: Assignment notification
+    NS-->>S: Notify shop about pickup
+    NS-->>C: Notify customer about delivery
+    
+    %% Order Delivery
+    Note over DeliveryPartner,DS: Delivery in progress
+    DeliveryPartner->>DS: Update delivery status
+    DS->>DB: Update delivery status
+    DS->>NS: Status change notification
+    NS-->>C: Send status update
+    
+    %% Order Completion
+    DeliveryPartner->>DS: Mark delivery complete
+    DS->>DB: Update delivery status
+    DS->>OS: Mark order as delivered
+    OS->>DB: Update order status
+    OS->>PayS: Release payment to shop
+    PayS->>DB: Update payment status
+    OS->>NS: Order completed notification
+    NS-->>C: Send delivery confirmation
+    NS-->>S: Send payment release notification
+    
+    %% Review and Rating
+    C->>CA: Submit review
+    CA->>AG: POST /reviews
+    AG->>AuthS: Validate customer token
+    AuthS-->>AG: Token valid
+    AG->>US: Create review
+    US->>DB: Store review data
+    DB-->>US: Confirm storage
+    US->>NS: Review notification
+    NS-->>S: Notify about new review
+    US-->>AG: Return review data
+    AG-->>CA: Show review posted
+    CA-->>C: Display confirmation
+    
+    %% Analytics
+    S->>SA: View analytics dashboard
+    SA->>AG: GET /analytics/shop
+    AG->>AuthS: Validate shopkeeper token
+    AuthS-->>AG: Token valid
+    AG->>SS: Get shop analytics
+    SS->>DB: Query analytics data
+    DB-->>SS: Return metrics
+    SS-->>AG: Return analytics data
+    AG-->>SA: Display analytics dashboard
+    SA-->>S: Show business insights
