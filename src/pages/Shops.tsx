@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ShopCard, { Shop } from '@/components/ShopCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, MapPin } from 'lucide-react';
+import { Search, Filter, MapPin, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { shopAPI } from '@/lib/api';
+import { useLocation } from '@/contexts/LocationContext';
 
 // Mock shop data with all required properties according to Shop type
 const mockShops = [
@@ -118,18 +120,33 @@ const categoryMapping = {
 const categories = ['all', 'grocery', 'electronics', 'fashion', 'books', 'bakery', 'homegoods', 'other'];
 
 const Shops = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { location, address, loading: locationLoading, error: locationError, refreshLocation } = useLocation();
 
   // Fetch shops from API
   useEffect(() => {
     const fetchShops = async () => {
       try {
         setLoading(true);
-        const response = await shopAPI.getShops();
+
+        let response;
+
+        // If we have location data, use it to fetch nearby shops
+        if (location) {
+          response = await shopAPI.getNearbyShops(
+            location.latitude,
+            location.longitude,
+            10000 // 10km radius
+          );
+        } else {
+          // Otherwise, fetch all shops
+          response = await shopAPI.getShops();
+        }
 
         if (response.success && response.data) {
           // Transform API data to match Shop interface
@@ -161,7 +178,7 @@ const Shops = () => {
             rating: shop.rating ?? 4.5,
             reviewCount: shop.reviewCount ?? 0,
             category: shop.category,
-            distance: '1.0 miles', // This would need to be calculated based on user location
+            distance: shop.distance ? `${(shop.distance / 1000).toFixed(1)} km` : 'Distance unknown',
             address: shop.address?.street ? `${shop.address.street}, ${shop.address.city}` : 'Address not available',
             isOpen: true, // This would need to be determined based on shop hours
             products: shop.productCount ?? 0,
@@ -195,7 +212,20 @@ const Shops = () => {
     };
 
     fetchShops();
-  }, [toast]);
+  }, [toast, location]);
+
+  // Helper function to get location status text
+  const getLocationStatusText = () => {
+    if (locationLoading) {
+      return 'Getting location...';
+    }
+
+    if (locationError) {
+      return 'Location unavailable';
+    }
+
+    return address || 'No location set';
+  };
 
   // Filter shops based on search term and category
   const filteredShops = shops.filter(shop => {
@@ -226,12 +256,35 @@ const Shops = () => {
                   placeholder="Search shops by name or product..."
                   className="pl-10"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setSearchTerm(newValue);
+
+                    // Update URL search parameters
+                    const newParams = new URLSearchParams(searchParams);
+                    if (newValue) {
+                      newParams.set('search', newValue);
+                    } else {
+                      newParams.delete('search');
+                    }
+                    setSearchParams(newParams);
+                  }}
                 />
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="text-sm text-gray-500">Seattle, WA</span>
+                <span className="text-sm text-gray-500">
+                  {getLocationStatusText()}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-1 h-auto"
+                  onClick={refreshLocation}
+                  disabled={locationLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${locationLoading ? 'animate-spin' : ''}`} />
+                </Button>
               </div>
               <Button variant="outline" className="flex gap-2">
                 <Filter className="h-4 w-4" />
@@ -246,7 +299,18 @@ const Shops = () => {
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => {
+                    setSelectedCategory(category);
+
+                    // Update URL search parameters
+                    const newParams = new URLSearchParams(searchParams);
+                    if (category !== 'all') {
+                      newParams.set('category', category);
+                    } else {
+                      newParams.delete('category');
+                    }
+                    setSearchParams(newParams);
+                  }}
                   className="rounded-full"
                 >
                   {categoryMapping[category as keyof typeof categoryMapping]}

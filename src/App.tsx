@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import { CartProvider } from "@/contexts/CartContext";
+import { LocationProvider } from "@/contexts/LocationContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -40,8 +41,9 @@ function App() {
         <Toaster />
         <Sonner />
         <CartProvider>
-          <BrowserRouter>
-            <Routes>
+          <LocationProvider>
+            <BrowserRouter>
+              <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/shops" element={<Shops />} />
@@ -128,7 +130,8 @@ function App() {
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </LocationProvider>
         </CartProvider>
       </TooltipProvider>
     </QueryClientProvider>
