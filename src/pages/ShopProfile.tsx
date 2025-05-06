@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Save, Upload } from 'lucide-react';
+import { clearShopImageCache, forceReloadAllImages } from '@/utils/cacheBuster';
 
 // Shop categories - must match the backend enum values
 const shopCategories = [
@@ -236,14 +237,24 @@ const ShopProfile = () => {
         // Add a small delay to ensure the server has processed the image
         toast({
           title: "Image Uploaded",
-          description: "Your shop image has been updated. Refreshing page to show changes...",
+          description: "Your shop image has been updated. Refreshing images to show changes...",
         });
 
-        // Clear browser cache for the image and reload
+        // Clear browser cache for the shop images
         setTimeout(() => {
-          // Force a hard reload to clear cache
-          window.location.href = window.location.href.split('#')[0] + '?t=' + new Date().getTime();
-        }, 1500);
+          if (shop && shop._id) {
+            // Clear cache for this specific shop's images
+            clearShopImageCache(shop._id);
+
+            // Force reload all images on the page
+            forceReloadAllImages();
+
+            // Refresh the image preview with a cache-busting parameter
+            if (imagePreview) {
+              setImagePreview(`${imagePreview.split('?')[0]}?t=${new Date().getTime()}`);
+            }
+          }
+        }, 1000);
       }
 
       if (!response.ok) {

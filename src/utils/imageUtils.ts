@@ -17,7 +17,7 @@ export const getShopFallbackImage = (category: string): string => {
     'homegoods': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'other': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
   };
-  
+
   return categoryImageMap[category] || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 };
 
@@ -42,7 +42,7 @@ export const getProductFallbackImage = (category: string): string => {
     'accessories': 'https://images.unsplash.com/photo-1523206489230-c012c64b2b48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'ethnic wear': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
   };
-  
+
   return categoryImageMap[category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 };
 
@@ -51,20 +51,52 @@ export const getProductFallbackImage = (category: string): string => {
  * @param imagePath The image path from the server
  * @param category The category for fallback image if path is invalid
  * @param type 'product' or 'shop' to determine which fallback to use
+ * @param bustCache Whether to add a cache-busting parameter to the URL
  * @returns The full image URL
  */
-export const getImageUrl = (imagePath: string | undefined, category: string, type: 'product' | 'shop'): string => {
-  if (imagePath) {
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    } else {
-      // For server-stored images, use the full path
-      return `http://localhost:5001/${imagePath}`;
-    }
-  } else {
+export const getImageUrl = (
+  imagePath: string | undefined,
+  category: string,
+  type: 'product' | 'shop',
+  bustCache: boolean = true
+): string => {
+  if (!imagePath) {
     // Use appropriate fallback based on type
-    return type === 'product' 
+    return type === 'product'
       ? getProductFallbackImage(category)
       : getShopFallbackImage(category);
   }
+
+  // If it's already a full URL, return it
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+
+  // Clean up the path to ensure it doesn't have any absolute path components
+  let cleanPath = imagePath;
+
+  // Remove any absolute path components (like A:/ or C:/)
+  if (/^[A-Za-z]:\\/.test(cleanPath) || cleanPath.includes(':\\')) {
+    // Extract just the filename from the path
+    const parts = cleanPath.split(/[/\\]/);
+    cleanPath = parts[parts.length - 1];
+  }
+
+  // Ensure the path starts with 'uploads/' if it doesn't already
+  if (!cleanPath.startsWith('uploads/')) {
+    // Check if it's in a subdirectory of uploads
+    if (type === 'product' && !cleanPath.includes('products/')) {
+      cleanPath = `uploads/products/${cleanPath}`;
+    } else if (type === 'shop' && !cleanPath.includes('shops/')) {
+      cleanPath = `uploads/shops/${cleanPath}`;
+    } else {
+      cleanPath = `uploads/${cleanPath}`;
+    }
+  }
+
+  // For server-stored images, use the full path
+  const baseUrl = `http://localhost:5001/${cleanPath}`;
+
+  // Add cache-busting parameter if requested
+  return bustCache ? `${baseUrl}?nocache=${new Date().getTime()}` : baseUrl;
 };

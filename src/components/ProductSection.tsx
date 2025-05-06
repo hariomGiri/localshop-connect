@@ -6,6 +6,7 @@ import { ArrowRight, Filter } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import ProductCard, { Product } from './ProductCard';
 import { productAPI } from '@/lib/api';
+import { getImageUrl, getProductFallbackImage } from '@/utils/imageUtils';
 
 // Mock product data for fallback
 const mockProducts: Product[] = [
@@ -92,19 +93,8 @@ const ProductSection = () => {
         if (response.success && response.data) {
           // Transform API data to match Product interface
           const apiProducts = response.data.map((product: any) => {
-            // Handle image URL properly
-            let imageUrl;
-            if (product.imageUrl) {
-              if (product.imageUrl.startsWith('http')) {
-                imageUrl = product.imageUrl;
-              } else {
-                // For server-stored images, use the full path
-                imageUrl = `http://localhost:5001/${product.imageUrl}`;
-              }
-            } else {
-              // Default image if none provided
-              imageUrl = 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-            }
+            // Use the utility function to handle image URL properly with cache busting
+            const imageUrl = getImageUrl(product.imageUrl, product.category, 'product', true);
 
             return {
               id: product._id,

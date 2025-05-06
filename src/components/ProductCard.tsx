@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/components/ui/use-toast';
-import { getProductFallbackImage } from '@/utils/imageUtils';
+import { getProductFallbackImage, getImageUrl } from '@/utils/imageUtils';
 
 export interface Product {
   id: string;

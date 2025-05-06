@@ -51,7 +51,30 @@ const loadCartFromStorage = (): CartState => {
 
   try {
     const storedCart = localStorage.getItem('cart');
-    return storedCart ? JSON.parse(storedCart) : initialState;
+
+    if (!storedCart) return initialState;
+
+    const parsedCart = JSON.parse(storedCart);
+
+    // Validate cart structure
+    if (!parsedCart || typeof parsedCart !== 'object') return initialState;
+
+    // Ensure items is an array
+    const validatedCart = {
+      ...initialState,
+      ...parsedCart,
+      items: Array.isArray(parsedCart.items) ? parsedCart.items : []
+    };
+
+    // Recalculate totals to ensure consistency
+    const itemCount = validatedCart.items.reduce((count, item) => count + (item.quantity ?? 0), 0);
+    const total = validatedCart.items.reduce((sum, item) => sum + ((item.price ?? 0) * (item.quantity ?? 0)), 0);
+
+    return {
+      ...validatedCart,
+      itemCount,
+      total
+    };
   } catch (error) {
     console.error('Failed to load cart from localStorage:', error);
     return initialState;
@@ -60,29 +83,35 @@ const loadCartFromStorage = (): CartState => {
 
 // Cart reducer
 const cartReducer = (state: CartState, action: CartAction): CartState => {
+  // Ensure state.items is always an array
+  const safeState = {
+    ...state,
+    items: Array.isArray(state.items) ? state.items : []
+  };
+
   let newState: CartState;
 
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existingItemIndex = state.items.findIndex(item => item.id === action.payload.id);
+      const existingItemIndex = safeState.items.findIndex(item => item.id === action.payload.id);
 
       if (existingItemIndex >= 0) {
         // Item exists, update quantity
-        const updatedItems = [...state.items];
+        const updatedItems = [...safeState.items];
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity: updatedItems[existingItemIndex].quantity + 1
         };
 
         newState = {
-          ...state,
+          ...safeState,
           items: updatedItems,
         };
       } else {
         // New item, add to cart
         newState = {
-          ...state,
-          items: [...state.items, { ...action.payload, quantity: 1 }],
+          ...safeState,
+          items: [...safeState.items, { ...action.payload, quantity: 1 }],
         };
       }
       break;
@@ -90,8 +119,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case 'REMOVE_ITEM': {
       newState = {
-        ...state,
-        items: state.items.filter(item => item.id !== action.payload),
+        ...safeState,
+        items: safeState.items.filter(item => item.id !== action.payload),
       };
       break;
     }
@@ -102,14 +131,14 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       if (quantity <= 0) {
         // If quantity is 0 or negative, remove the item
         newState = {
-          ...state,
-          items: state.items.filter(item => item.id !== id),
+          ...safeState,
+          items: safeState.items.filter(item => item.id !== id),
         };
       } else {
         // Update quantity
         newState = {
-          ...state,
-          items: state.items.map(item =>
+          ...safeState,
+          items: safeState.items.map(item =>
             item.id === id ? { ...item, quantity } : item
           ),
         };
@@ -124,8 +153,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case 'CLEAR_SHOP_ITEMS': {
       newState = {
-        ...state,
-        items: state.items.filter(item => item.shopId !== action.payload),
+        ...safeState,
+        items: safeState.items.filter(item => item.shopId !== action.payload),
       };
       break;
     }
@@ -176,8 +205,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isInCart = (id: string) => {
-    // Add null check to prevent "Cannot read properties of undefined" error
-    return cart?.items?.some(item => item.id === id) || false;
+    // Ensure cart and items are properly defined
+    if (!cart || !Array.isArray(cart.items)) return false;
+    return cart.items.some(item => item.id === id);
   };
 
   // Memoize the context value to prevent unnecessary re-renders

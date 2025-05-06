@@ -25,7 +25,7 @@ router.get('/user/myshop', getMyShop);
 // Protected routes - only shopkeepers and admins
 router.post(
   '/register',
-  upload.fields([
+  ...upload.fields([
     { name: 'idProof', maxCount: 1 },
     { name: 'businessDocument', maxCount: 1 }
   ]),
@@ -34,30 +34,10 @@ router.post(
 
 router.put(
   '/:id',
-  (req, res, next) => {
-    // Wrap the multer middleware in a try-catch block
-    try {
-      upload.fields([
-        { name: 'shopImage', maxCount: 1 },
-        { name: 'businessDocument', maxCount: 1 }
-      ])(req, res, (err) => {
-        if (err) {
-          console.error('File upload error:', err);
-          return res.status(400).json({
-            success: false,
-            message: `File upload error: ${err.message}`
-          });
-        }
-        next();
-      });
-    } catch (error) {
-      console.error('Unexpected error in file upload middleware:', error);
-      return res.status(500).json({
-        success: false,
-        message: `Unexpected error in file upload: ${error.message}`
-      });
-    }
-  },
+  ...upload.fields([
+    { name: 'shopImage', maxCount: 1 },
+    { name: 'businessDocument', maxCount: 1 }
+  ]),
   updateShop
 );
 

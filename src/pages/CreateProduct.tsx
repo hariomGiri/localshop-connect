@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
 import { ImageUp, Tag, PackageCheck } from 'lucide-react';
+import { forceReloadAllImages } from '@/utils/cacheBuster';
 
 const CreateProduct = () => {
   const navigate = useNavigate();
@@ -114,7 +115,13 @@ const CreateProduct = () => {
         description: "Your product has been created successfully",
       });
 
-      navigate('/shopkeeper/dashboard');
+      // Force reload all images to ensure new product images are displayed correctly
+      forceReloadAllImages();
+
+      // Navigate to dashboard after a short delay to allow image cache clearing
+      setTimeout(() => {
+        navigate('/shopkeeper/dashboard');
+      }, 500);
     } catch (error) {
       toast({
         title: "Error",

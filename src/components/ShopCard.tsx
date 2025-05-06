@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Star, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getShopFallbackImage } from '@/utils/imageUtils';
+import { getShopFallbackImage, getImageUrl } from '@/utils/imageUtils';
 
 export interface Shop {
   id: string;

@@ -24,13 +24,13 @@ router.get('/my/products', authorize('shopkeeper', 'admin'), getMyProducts);
 router.post(
   '/',
   authorize('shopkeeper', 'admin'),
-  upload.single('image'),
+  ...upload.single('image'),
   createProduct
 );
 router.put(
   '/:id',
   authorize('shopkeeper', 'admin'),
-  upload.single('image'),
+  ...upload.single('image'),
   updateProduct
 );
 router.delete('/:id', authorize('shopkeeper', 'admin'), deleteProduct);

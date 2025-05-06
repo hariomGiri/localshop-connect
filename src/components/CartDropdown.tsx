@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { X, ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { getImageUrl, getProductFallbackImage } from '@/utils/imageUtils';
 import { formatCurrency } from '@/lib/utils';
 
 interface CartDropdownProps {
@@ -73,18 +74,14 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onClose }) => {
                   <div key={item.id} className="flex items-center gap-3">
                     <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                       <img
-                        src={
-                          item.imageUrl.startsWith('http')
-                            ? item.imageUrl
-                            : `http://localhost:5001/uploads/${item.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`
-                        }
+                        src={getImageUrl(item.imageUrl, item.category || 'other', 'product', true)}
                         alt={item.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           // If image fails to load, use a fallback image
                           const target = e.target as HTMLImageElement;
                           target.onerror = null; // Prevent infinite loop
-                          target.src = 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                          target.src = getProductFallbackImage(item.category || 'other');
                         }}
                       />
                     </div>

@@ -26,21 +26,29 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Create subdirectories based on file type
     let uploadPath = uploadsDir;
+    let uploadSubdir = '';
 
     if (file.fieldname === 'idProof') {
-      uploadPath = path.join(uploadsDir, 'id-proofs');
+      uploadSubdir = 'id-proofs';
+      uploadPath = path.join(uploadsDir, uploadSubdir);
     } else if (file.fieldname === 'businessDocument') {
-      uploadPath = path.join(uploadsDir, 'business-docs');
+      uploadSubdir = 'business-docs';
+      uploadPath = path.join(uploadsDir, uploadSubdir);
     } else if (file.fieldname === 'image' || file.fieldname.includes('product')) {
-      uploadPath = path.join(uploadsDir, 'products');
+      uploadSubdir = 'products';
+      uploadPath = path.join(uploadsDir, uploadSubdir);
     } else if (file.fieldname.includes('shop')) {
-      uploadPath = path.join(uploadsDir, 'shops');
+      uploadSubdir = 'shops';
+      uploadPath = path.join(uploadsDir, uploadSubdir);
     }
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
+
+    // Store the uploadSubdir in the request object for later use
+    req.uploadSubdir = uploadSubdir;
 
     cb(null, uploadPath);
   },
@@ -67,12 +75,56 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Create multer upload instance
-const upload = multer({
+const multerUpload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: fileFilter
 });
+
+// Custom middleware to process the file path after upload
+const processFilePath = (req, res, next) => {
+  // If there are no files, continue
+  if (!req.file && !req.files) {
+    return next();
+  }
+
+  // Process single file upload
+  if (req.file) {
+    // Store the relative path instead of the absolute path
+    const relativePath = path.relative(process.cwd(), req.file.path).replace(/\\/g, '/');
+    req.file.path = relativePath;
+  }
+
+  // Process multiple files upload
+  if (req.files) {
+    Object.keys(req.files).forEach(fieldname => {
+      req.files[fieldname].forEach(file => {
+        // Store the relative path instead of the absolute path
+        const relativePath = path.relative(process.cwd(), file.path).replace(/\\/g, '/');
+        file.path = relativePath;
+      });
+    });
+  }
+
+  next();
+};
+
+// Create a wrapper for the upload middleware
+const upload = {
+  single: (fieldname) => {
+    return [multerUpload.single(fieldname), processFilePath];
+  },
+  array: (fieldname, maxCount) => {
+    return [multerUpload.array(fieldname, maxCount), processFilePath];
+  },
+  fields: (fields) => {
+    return [multerUpload.fields(fields), processFilePath];
+  },
+  none: () => {
+    return [multerUpload.none(), processFilePath];
+  }
+};
 
 export default upload;

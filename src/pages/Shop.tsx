@@ -24,7 +24,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { getProductFallbackImage, getShopFallbackImage } from '@/utils/imageUtils';
+import { getProductFallbackImage, getShopFallbackImage, getImageUrl } from '@/utils/imageUtils';
 import { shopAPI, productAPI } from '@/lib/api';
 
 // Mock product data
@@ -138,15 +138,8 @@ const Shop = () => {
         if (productsResponse.success) {
           // Process product data to ensure image URLs are correct
           const processedProducts = (productsResponse.data || []).map((product: any) => {
-            // Process image URL
-            let imageUrl = product.imageUrl;
-            if (imageUrl) {
-              if (!imageUrl.startsWith('http')) {
-                imageUrl = `http://localhost:5001/${imageUrl}`;
-              }
-            } else {
-              imageUrl = getProductFallbackImage(product.category);
-            }
+            // Use the utility function to handle image URL properly with cache busting
+            const imageUrl = getImageUrl(product.imageUrl, product.category, 'product', true);
 
             // Return processed product
             return {
@@ -246,10 +239,10 @@ const Shop = () => {
               <img
                 src={
                   shop.imageUrl
-                    ? (shop.imageUrl.startsWith('http')
-                      ? shop.imageUrl
-                      : `http://localhost:5001/uploads/${shop.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`)
-                    : (shop.coverImage || 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80')
+                    ? getImageUrl(shop.imageUrl, shop.category, 'shop', true)
+                    : (shop.coverImage
+                       ? getImageUrl(shop.coverImage, shop.category, 'shop', true)
+                       : getShopFallbackImage(shop.category))
                 }
                 alt={`${shop.name} store`}
                 className="w-full h-full object-cover"
@@ -262,14 +255,10 @@ const Shop = () => {
                   <img
                     src={
                       shop.logo
-                        ? (shop.logo.startsWith('http')
-                          ? shop.logo
-                          : `http://localhost:5001/uploads/${shop.logo.replace('uploads/', '')}?nocache=${new Date().getTime()}`)
+                        ? getImageUrl(shop.logo, shop.category, 'shop', true)
                         : (shop.imageUrl
-                          ? (shop.imageUrl.startsWith('http')
-                            ? shop.imageUrl
-                            : `http://localhost:5001/uploads/${shop.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`)
-                          : 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80')
+                          ? getImageUrl(shop.imageUrl, shop.category, 'shop', true)
+                          : getShopFallbackImage(shop.category))
                     }
                     alt={shop.name}
                     className="w-20 h-20 md:w-24 md:h-24 object-cover bg-white"
