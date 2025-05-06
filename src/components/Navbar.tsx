@@ -88,6 +88,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'About Us', path: '/about' },
     { name: 'Shops', path: '/shops' },
     { name: 'Products', path: '/products' },
     { name: 'How It Works', path: '/how-it-works' },
@@ -117,13 +118,11 @@ const Navbar = () => {
           className="flex items-center space-x-2"
           aria-label="ShowcaseConnect"
         >
-          <ShoppingBag
-            className="h-8 w-8 text-primary"
-            aria-hidden="true"
+          <img
+            src="/logo.png"
+            alt="ShowcaseConnect Logo"
+            className="h-16 w-auto"
           />
-          <span className="font-bold text-xl md:text-2xl font-display">
-            Showcase<span className="text-primary">Connect</span>
-          </span>
         </Link>
 
         {/* Desktop Navigation */}

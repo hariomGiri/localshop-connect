@@ -9,7 +9,7 @@ const About = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
+
       <main className="flex-grow pt-16">
         {/* Hero section */}
         <section className="bg-gradient-to-b from-primary/10 to-background py-16">
@@ -20,15 +20,15 @@ const About = () => {
             </p>
           </div>
         </section>
-        
+
         {/* Mission section */}
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center gap-10">
               <div className="md:w-1/2">
-                <img 
-                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
-                  alt="Local marketplace" 
+                <img
+                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+                  alt="Local marketplace"
                   className="rounded-lg shadow-lg"
                 />
               </div>
@@ -47,12 +47,12 @@ const About = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Values section */}
         <section className="bg-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-12">Our Values</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -63,7 +63,7 @@ const About = () => {
                   We prioritize the success of local businesses and believe in the power of community-based commerce.
                 </p>
               </div>
-              
+
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-primary" />
@@ -73,7 +73,7 @@ const About = () => {
                   We build connections between shop owners and customers that strengthen neighborhood ties.
                 </p>
               </div>
-              
+
               <div className="bg-gray-50 p-6 rounded-lg text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <ShieldCheck className="h-8 w-8 text-primary" />
@@ -86,51 +86,47 @@ const About = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Team section */}
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+            <div className="flex flex-wrap justify-center gap-12">
               {[
                 {
-                  name: 'Sarah Johnson',
+                  name: 'Hariom Giri',
                   role: 'Founder & CEO',
-                  image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+                  image: '/profile image.webp'
                 },
                 {
-                  name: 'David Chen',
+                  name: 'Yogesh Rajput',
                   role: 'CTO',
-                  image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+                  image: '/yogi.png'
                 },
                 {
-                  name: 'Priya Sharma',
+                  name: 'Lokesh Kewat',
                   role: 'Head of Shop Relations',
-                  image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+                  image: '/image.png'
                 },
-                {
-                  name: 'Marcus Williams',
-                  role: 'Head of Customer Experience',
-                  image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-                }
+
               ].map(member => (
-                <div key={member.name} className="text-center">
-                  <div className="w-48 h-48 mx-auto mb-4 overflow-hidden rounded-full">
-                    <img 
-                      src={member.image} 
-                      alt={member.name} 
-                      className="w-full h-full object-cover"
+                <div key={member.name} className="text-center flex flex-col items-center">
+                  <div className="w-56 h-56 mb-4 overflow-hidden rounded-full flex items-center justify-center">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-full object-cover object-center"
                     />
                   </div>
-                  <h3 className="text-xl font-semibold">{member.name}</h3>
+                  <h3 className="text-xl font-semibold mt-2">{member.name}</h3>
                   <p className="text-gray-600">{member.role}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
-        
+
         {/* CTA section */}
         <section className="bg-primary/10 py-16">
           <div className="max-w-3xl mx-auto px-4 text-center">
@@ -148,7 +144,7 @@ const About = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Contact section */}
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -169,7 +165,7 @@ const About = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

@@ -15,7 +15,7 @@ const PendingApproval = () => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-        
+
         // If user is already a shopkeeper (approved), redirect to dashboard
         if (parsedUser.role === 'shopkeeper') {
           navigate('/shopkeeper/dashboard');
@@ -35,10 +35,11 @@ const PendingApproval = () => {
       <header className="py-4 px-6 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <ShoppingBag className="h-8 w-8 text-primary" />
-            <span className="font-bold text-xl font-display">
-              Showcase<span className="text-primary">Connect</span>
-            </span>
+            <img
+              src="/logo.png"
+              alt="ShowcaseConnect Logo"
+              className="h-10 w-auto"
+            />
           </Link>
 
           <Link to="/" className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">

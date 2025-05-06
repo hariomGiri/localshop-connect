@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
   Mail,
   Phone,
   MapPin,
@@ -19,10 +19,13 @@ const Footer = () => {
           {/* Column 1: About */}
           <div>
             <div className="flex items-center space-x-2 mb-6">
-              <ShoppingBag className="h-7 w-7 text-primary" />
-              <span className="font-bold text-xl font-display">
-                Showcase<span className="text-primary">Connect</span>
-              </span>
+              <div className="bg-white p-2 rounded-md">
+                <img
+                  src="/logo.png"
+                  alt="ShowcaseConnect Logo"
+                  className="h-10 w-auto"
+                />
+              </div>
             </div>
             <p className="text-gray-400 mb-6">
               Bridging the gap between local retailers and digital consumers to create a vibrant community marketplace.
@@ -42,7 +45,7 @@ const Footer = () => {
               </a>
             </div>
           </div>
-          
+
           {/* Column 2: Quick Links */}
           <div>
             <h4 className="font-semibold text-lg mb-6">Quick Links</h4>
@@ -67,7 +70,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Column 3: For Shopkeepers */}
           <div>
             <h4 className="font-semibold text-lg mb-6">For Shopkeepers</h4>
@@ -89,7 +92,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Column 4: Contact */}
           <div>
             <h4 className="font-semibold text-lg mb-6">Contact Us</h4>
@@ -97,13 +100,13 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-primary mr-3 mt-0.5" />
                 <span className="text-gray-400">
-                  123 Market Street<br />
-                  Seattle, WA 98101
+                  LNCT Indore<br />
+                  Near Sanwer Road, Indore, MP 453112
                 </span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 text-primary mr-3" />
-                <span className="text-gray-400">+1 (234) 567-8900</span>
+                <span className="text-gray-400">+91 8726862025</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 text-primary mr-3" />
@@ -112,11 +115,11 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        
+
         {/* Bottom footer with copyright and links */}
         <div className="pt-8 border-t border-gray-800 text-gray-400 flex flex-col md:flex-row justify-between items-center">
           <p>© 2023 ShowcaseConnect. All rights reserved.</p>
-          
+
           <div className="flex mt-4 md:mt-0 space-x-6">
             <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>

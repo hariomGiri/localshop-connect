@@ -84,7 +84,11 @@ const Login = () => {
         {/* Logo and title */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center justify-center">
-            <ShoppingBag className="h-10 w-10 text-primary" />
+            <img
+              src="/logo.png"
+              alt="ShowcaseConnect Logo"
+              className="h-12 w-auto"
+            />
           </Link>
           <h2 className="mt-4 text-3xl font-bold text-gray-900 font-display">
             Welcome Back
