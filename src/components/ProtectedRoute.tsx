@@ -100,6 +100,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
         return <Navigate to="/admin/dashboard" replace />;
       } else if (user.role === 'shopkeeper') {
         return <Navigate to="/shopkeeper/dashboard" replace />;
+      } else if (user.role === 'pending_shopkeeper') {
+        return <Navigate to="/pending-approval" replace />;
       }
     }
 

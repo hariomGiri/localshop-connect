@@ -16,7 +16,7 @@ const mockShops: Shop[] = [
     imageUrl: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     rating: 4.7,
     reviewCount: 128,
-    category: 'Grocery',
+    category: 'grocery',
     distance: '0.7 miles',
     address: '123 Local St, Downtown',
     isOpen: true,
@@ -29,7 +29,7 @@ const mockShops: Shop[] = [
     imageUrl: 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     rating: 4.9,
     reviewCount: 213,
-    category: 'Bakery',
+    category: 'bakery',
     distance: '0.9 miles',
     address: '78 Main St, Downtown',
     isOpen: true,
@@ -42,7 +42,7 @@ const mockShops: Shop[] = [
     imageUrl: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     rating: 4.3,
     reviewCount: 98,
-    category: 'Electronics',
+    category: 'electronics',
     distance: '1.2 miles',
     address: '456 Tech Blvd, Midtown',
     isOpen: false,
@@ -55,7 +55,7 @@ const mockShops: Shop[] = [
     imageUrl: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     rating: 4.5,
     reviewCount: 156,
-    category: 'Clothing',
+    category: 'fashion',
     distance: '1.5 miles',
     address: '789 Style Ave, Uptown',
     isOpen: true,
@@ -64,18 +64,32 @@ const mockShops: Shop[] = [
   }
 ];
 
+// Category display mapping
+const categoryMapping = {
+  'all': 'All',
+  'grocery': 'Grocery',
+  'electronics': 'Electronics',
+  'fashion': 'Fashion',
+  'homegoods': 'Home & Garden',
+  'bakery': 'Bakery',
+  'books': 'Books',
+  'other': 'Other'
+};
+
+// Categories for filtering - must match backend values
 const categories = [
-  'All',
-  'Grocery',
-  'Electronics',
-  'Fashion',
-  'Home & Garden',
-  'Bakery',
-  'Books'
+  'all',
+  'grocery',
+  'electronics',
+  'fashion',
+  'homegoods',
+  'bakery',
+  'books',
+  'other'
 ];
 
 const ShopSection = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
   const [isVisible, ref] = useIsVisible({ threshold: 0.1 });
   const [loading, setLoading] = useState(true);
@@ -93,7 +107,13 @@ const ShopSection = () => {
           const apiShops = response.data.map((shop: any) => ({
             id: shop._id,
             name: shop.name,
-            imageUrl: shop.imageUrl ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Default image if none provided
+            // Use full URL for shop images if they don't start with http
+            // Add a random query parameter to prevent browser caching
+            imageUrl: shop.imageUrl
+              ? (shop.imageUrl.startsWith('http')
+                ? shop.imageUrl
+                : `http://localhost:5001/uploads/${shop.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`)
+              : 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
             rating: shop.rating ?? 4.5,
             reviewCount: shop.reviewCount ?? 0,
             category: shop.category,
@@ -104,14 +124,14 @@ const ShopSection = () => {
             tags: shop.tags ?? [shop.category]
           }));
 
-          if (selectedCategory === 'All') {
+          if (selectedCategory === 'all') {
             setFilteredShops(apiShops);
           } else {
             setFilteredShops(apiShops.filter((shop: Shop) => shop.category === selectedCategory));
           }
         } else {
           // If API call fails, use mock data as fallback
-          if (selectedCategory === 'All') {
+          if (selectedCategory === 'all') {
             setFilteredShops(mockShops);
           } else {
             setFilteredShops(mockShops.filter(shop => shop.category === selectedCategory));
@@ -126,7 +146,7 @@ const ShopSection = () => {
       } catch (error) {
         console.error("Error fetching shops:", error);
         // Use mock data as fallback
-        if (selectedCategory === 'All') {
+        if (selectedCategory === 'all') {
           setFilteredShops(mockShops);
         } else {
           setFilteredShops(mockShops.filter(shop => shop.category === selectedCategory));
@@ -205,7 +225,8 @@ const ShopSection = () => {
                 }`}
                 onClick={() => setSelectedCategory(category)}
               >
-                {category}
+                {/* Display capitalized category name */}
+                {categoryMapping[category as keyof typeof categoryMapping]}
               </button>
             ))}
           </div>

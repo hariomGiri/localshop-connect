@@ -127,11 +127,22 @@ export const shopAPI = {
     return apiRequest<ShopResponse>('/shops/user/myshop');
   },
 
-  updateShop: async (id: string, shopData: Partial<ShopFormData>): Promise<ShopResponse> => {
-    return apiRequest<ShopResponse>(`/shops/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(shopData),
-    });
+  updateShop: async (id: string, shopData: FormData | Partial<ShopFormData>): Promise<ShopResponse> => {
+    // Check if shopData is FormData
+    if (shopData instanceof FormData) {
+      // For FormData, don't set Content-Type header (browser will set it with boundary)
+      return apiRequest<ShopResponse>(`/shops/${id}`, {
+        method: 'PUT',
+        headers: {}, // Let the browser set the content type for FormData
+        body: shopData,
+      });
+    } else {
+      // For JSON data
+      return apiRequest<ShopResponse>(`/shops/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(shopData),
+      });
+    }
   },
 
   getNearbyShops: async (lat: number, lng: number, distance?: number): Promise<ShopResponse> => {

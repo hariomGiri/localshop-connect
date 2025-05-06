@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 
 // Define types for cart items and context
 export interface CartItem {
@@ -48,7 +48,7 @@ const initialState: CartState = {
 // Load cart from localStorage
 const loadCartFromStorage = (): CartState => {
   if (typeof window === 'undefined') return initialState;
-  
+
   try {
     const storedCart = localStorage.getItem('cart');
     return storedCart ? JSON.parse(storedCart) : initialState;
@@ -61,11 +61,11 @@ const loadCartFromStorage = (): CartState => {
 // Cart reducer
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   let newState: CartState;
-  
+
   switch (action.type) {
     case 'ADD_ITEM': {
       const existingItemIndex = state.items.findIndex(item => item.id === action.payload.id);
-      
+
       if (existingItemIndex >= 0) {
         // Item exists, update quantity
         const updatedItems = [...state.items];
@@ -73,7 +73,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           ...updatedItems[existingItemIndex],
           quantity: updatedItems[existingItemIndex].quantity + 1
         };
-        
+
         newState = {
           ...state,
           items: updatedItems,
@@ -87,7 +87,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       }
       break;
     }
-    
+
     case 'REMOVE_ITEM': {
       newState = {
         ...state,
@@ -95,10 +95,10 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       };
       break;
     }
-    
+
     case 'UPDATE_QUANTITY': {
       const { id, quantity } = action.payload;
-      
+
       if (quantity <= 0) {
         // If quantity is 0 or negative, remove the item
         newState = {
@@ -109,19 +109,19 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         // Update quantity
         newState = {
           ...state,
-          items: state.items.map(item => 
+          items: state.items.map(item =>
             item.id === id ? { ...item, quantity } : item
           ),
         };
       }
       break;
     }
-    
+
     case 'CLEAR_CART': {
       newState = initialState;
       break;
     }
-    
+
     case 'CLEAR_SHOP_ITEMS': {
       newState = {
         ...state,
@@ -129,15 +129,15 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       };
       break;
     }
-    
+
     default:
       return state;
   }
-  
+
   // Calculate totals
   const itemCount = newState.items.reduce((count, item) => count + item.quantity, 0);
   const total = newState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
+
   return {
     ...newState,
     itemCount,
@@ -148,47 +148,51 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 // Cart provider component
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, dispatch] = useReducer(cartReducer, initialState, loadCartFromStorage);
-  
+
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
-  
+
   // Cart actions
   const addItem = (item: Omit<CartItem, 'quantity'>) => {
     dispatch({ type: 'ADD_ITEM', payload: { ...item, quantity: 1 } });
   };
-  
+
   const removeItem = (id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: id });
   };
-  
+
   const updateQuantity = (id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   };
-  
+
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
   };
-  
+
   const clearShopItems = (shopId: string) => {
     dispatch({ type: 'CLEAR_SHOP_ITEMS', payload: shopId });
   };
-  
+
   const isInCart = (id: string) => {
-    return cart.items.some(item => item.id === id);
+    // Add null check to prevent "Cannot read properties of undefined" error
+    return cart?.items?.some(item => item.id === id) || false;
   };
-  
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    cart,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    clearShopItems,
+    isInCart
+  }), [cart]);
+
   return (
-    <CartContext.Provider value={{
-      cart,
-      addItem,
-      removeItem,
-      updateQuantity,
-      clearCart,
-      clearShopItems,
-      isInCart
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

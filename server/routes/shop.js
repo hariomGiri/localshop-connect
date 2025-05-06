@@ -34,10 +34,30 @@ router.post(
 
 router.put(
   '/:id',
-  upload.fields([
-    { name: 'shopImage', maxCount: 1 },
-    { name: 'businessDocument', maxCount: 1 }
-  ]),
+  (req, res, next) => {
+    // Wrap the multer middleware in a try-catch block
+    try {
+      upload.fields([
+        { name: 'shopImage', maxCount: 1 },
+        { name: 'businessDocument', maxCount: 1 }
+      ])(req, res, (err) => {
+        if (err) {
+          console.error('File upload error:', err);
+          return res.status(400).json({
+            success: false,
+            message: `File upload error: ${err.message}`
+          });
+        }
+        next();
+      });
+    } catch (error) {
+      console.error('Unexpected error in file upload middleware:', error);
+      return res.status(500).json({
+        success: false,
+        message: `Unexpected error in file upload: ${error.message}`
+      });
+    }
+  },
   updateShop
 );
 

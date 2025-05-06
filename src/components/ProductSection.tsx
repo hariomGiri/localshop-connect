@@ -14,7 +14,7 @@ const mockProducts: Product[] = [
     name: 'Organic Fresh Apples',
     description: 'Locally sourced organic apples, perfect for healthy snacking',
     imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 3.99,
+    price: 299,
     shop: 'Green Market Fresh',
     shopId: '1',
     category: 'Fruits',
@@ -27,7 +27,7 @@ const mockProducts: Product[] = [
     name: 'Whole Grain Artisan Bread',
     description: 'Freshly baked artisan bread made with organic whole grain flour',
     imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 5.49,
+    price: 549,
     shop: 'Artisan Bakery',
     shopId: '2',
     category: 'Bakery',
@@ -40,7 +40,7 @@ const mockProducts: Product[] = [
     name: 'Locally Sourced Honey',
     description: 'Pure, raw honey from local beekeepers, perfect for tea or baking',
     imageUrl: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 8.99,
+    price: 899,
     shop: 'Green Market Fresh',
     shopId: '1',
     category: 'Pantry',
@@ -53,7 +53,7 @@ const mockProducts: Product[] = [
     name: 'Handmade Chocolate Truffles',
     description: 'Decadent chocolate truffles made with premium ingredients',
     imageUrl: 'https://images.unsplash.com/photo-1548907040-4d42bfc87a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 12.99,
+    price: 1299,
     shop: 'Sweet Delights',
     shopId: '3',
     category: 'Confectionery',
@@ -91,19 +91,35 @@ const ProductSection = () => {
 
         if (response.success && response.data) {
           // Transform API data to match Product interface
-          const apiProducts = response.data.map((product: any) => ({
-            id: product._id,
-            name: product.name,
-            description: product.description,
-            imageUrl: product.imageUrl || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-            price: product.price,
-            shop: product.shop?.name || 'Local Shop',
-            shopId: product.shop?._id || '1',
-            category: product.category,
-            inStock: product.inStock,
-            rating: 4.5, // Default rating if not provided
-            tags: product.tags || [product.category]
-          }));
+          const apiProducts = response.data.map((product: any) => {
+            // Handle image URL properly
+            let imageUrl;
+            if (product.imageUrl) {
+              if (product.imageUrl.startsWith('http')) {
+                imageUrl = product.imageUrl;
+              } else {
+                // For server-stored images, use the full path
+                imageUrl = `http://localhost:5001/${product.imageUrl}`;
+              }
+            } else {
+              // Default image if none provided
+              imageUrl = 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            }
+
+            return {
+              id: product._id,
+              name: product.name,
+              description: product.description,
+              imageUrl: imageUrl,
+              price: product.price,
+              shop: product.shop?.name ?? 'Local Shop',
+              shopId: product.shop?._id ?? '1',
+              category: product.category,
+              inStock: product.inStock,
+              rating: 4.5, // Default rating if not provided
+              tags: product.tags ?? [product.category]
+            };
+          });
 
           setProducts(apiProducts);
         } else {

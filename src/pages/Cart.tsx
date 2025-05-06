@@ -95,9 +95,19 @@ const Cart = () => {
                           <div className="p-6 flex items-start gap-4">
                             <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                               <img
-                                src={item.imageUrl}
+                                src={
+                                  item.imageUrl.startsWith('http')
+                                    ? item.imageUrl
+                                    : `http://localhost:5001/uploads/${item.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`
+                                }
                                 alt={item.name}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // If image fails to load, use a fallback image
+                                  const target = e.target as HTMLImageElement;
+                                  target.onerror = null; // Prevent infinite loop
+                                  target.src = 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                                }}
                               />
                             </div>
 

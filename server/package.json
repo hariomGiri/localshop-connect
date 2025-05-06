@@ -11,7 +11,8 @@
     "create-customer": "node scripts/create-test-user.js",
     "create-shopkeeper": "node scripts/create-test-shopkeeper.js",
     "create-admin": "node scripts/create-test-admin.js",
-    "create-all-users": "npm run create-customer && npm run create-shopkeeper && npm run create-admin"
+    "create-all-users": "npm run create-customer && npm run create-shopkeeper && npm run create-admin",
+    "setup-demo": "node scripts/setup-demo-environment.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

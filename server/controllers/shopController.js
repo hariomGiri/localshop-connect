@@ -1,9 +1,13 @@
+import mongoose from 'mongoose';
 import Shop from '../models/Shop.js';
 import User from '../models/User.js';
 
 // Register a new shop
 export const registerShop = async (req, res) => {
   try {
+    console.log('Shop registration request body:', req.body);
+    console.log('Files received:', req.files);
+
     const {
       name,
       description,
@@ -18,11 +22,23 @@ export const registerShop = async (req, res) => {
       longitude
     } = req.body;
 
+    // Check which fields are missing
+    const missingFields = [];
+    if (!name) missingFields.push('name');
+    if (!description) missingFields.push('description');
+    if (!category) missingFields.push('category');
+    if (!address) missingFields.push('address');
+    if (!city) missingFields.push('city');
+    if (!state) missingFields.push('state');
+    if (!zipCode) missingFields.push('zipCode');
+    if (!email) missingFields.push('email');
+    if (!phone) missingFields.push('phone');
+
     // Validate required fields
-    if (!name || !description || !category || !address || !city || !state || !zipCode || !email || !phone) {
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields'
+        message: `Please provide all required fields. Missing: ${missingFields.join(', ')}`
       });
     }
 
@@ -89,9 +105,29 @@ export const registerShop = async (req, res) => {
       data: shop
     });
   } catch (error) {
-    res.status(400).json({
+    console.error('Error in shop registration:', error);
+
+    // Provide more specific error messages based on the error type
+    if (error.name === 'ValidationError') {
+      // Mongoose validation error
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    } else if (error.code === 11000) {
+      // Duplicate key error
+      return res.status(400).json({
+        success: false,
+        message: 'A shop with this information already exists'
+      });
+    }
+
+    // Generic error
+    res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message || 'An error occurred during shop registration'
     });
   }
 };
@@ -100,6 +136,16 @@ export const registerShop = async (req, res) => {
 export const getShops = async (req, res) => {
   try {
     const shops = await Shop.find({ status: 'approved' });
+
+    // Get product counts for each shop
+    const Product = mongoose.model('Product');
+
+    // Use Promise.all to run all product count queries in parallel
+    await Promise.all(shops.map(async (shop) => {
+      const productCount = await Product.countDocuments({ shop: shop._id });
+      shop.productCount = productCount;
+      await shop.save();
+    }));
 
     res.status(200).json({
       success: true,
@@ -117,7 +163,10 @@ export const getShops = async (req, res) => {
 // Get single shop
 export const getShop = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id);
+    const shop = await Shop.findOne({
+      _id: req.params.id,
+      status: 'approved' // Only return approved shops
+    });
 
     if (!shop) {
       return res.status(404).json({
@@ -125,6 +174,12 @@ export const getShop = async (req, res) => {
         message: 'Shop not found'
       });
     }
+
+    // Update product count for this shop
+    const Product = mongoose.model('Product');
+    const productCount = await Product.countDocuments({ shop: shop._id });
+    shop.productCount = productCount;
+    await shop.save();
 
     res.status(200).json({
       success: true,
@@ -149,6 +204,12 @@ export const getMyShop = async (req, res) => {
         message: 'You do not have a shop yet'
       });
     }
+
+    // Update product count for this shop
+    const Product = mongoose.model('Product');
+    const productCount = await Product.countDocuments({ shop: shop._id });
+    shop.productCount = productCount;
+    await shop.save();
 
     res.status(200).json({
       success: true,
@@ -182,7 +243,47 @@ export const updateShop = async (req, res) => {
       });
     }
 
-    shop = await Shop.findByIdAndUpdate(req.params.id, req.body, {
+    // Create update data from request body
+    const updateData = { ...req.body };
+
+    // Parse JSON strings if they exist
+    if (updateData.address && typeof updateData.address === 'string') {
+      try {
+        updateData.address = JSON.parse(updateData.address);
+      } catch (error) {
+        console.error('Error parsing address JSON:', error);
+      }
+    }
+
+    if (updateData.contact && typeof updateData.contact === 'string') {
+      try {
+        updateData.contact = JSON.parse(updateData.contact);
+      } catch (error) {
+        console.error('Error parsing contact JSON:', error);
+      }
+    }
+
+    // Handle file uploads if they exist
+    if (req.files) {
+      // Handle shop image
+      if (req.files.shopImage && req.files.shopImage[0]) {
+        // Store just the path without timestamp in the database
+        // The timestamp will be added by the client when requesting the image
+        updateData.imageUrl = req.files.shopImage[0].path;
+        console.log(`Updated shop image: ${updateData.imageUrl}`);
+      }
+
+      // Handle business document if present
+      if (req.files.businessDocument && req.files.businessDocument[0]) {
+        if (!updateData.documents) {
+          updateData.documents = {};
+        }
+        updateData.documents.businessDocument = req.files.businessDocument[0].path;
+      }
+    }
+
+    // Update the shop with the new data
+    shop = await Shop.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
     });
@@ -192,9 +293,10 @@ export const updateShop = async (req, res) => {
       data: shop
     });
   } catch (error) {
-    res.status(400).json({
+    console.error('Error updating shop:', error);
+    res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message || 'An error occurred while updating the shop'
     });
   }
 };
@@ -245,6 +347,15 @@ export const approveShop = async (req, res) => {
 
     // Get shop owner details for email notification
     const shopOwner = await User.findById(shop.owner);
+
+    // If shop is approved, update the user's role from pending_shopkeeper to shopkeeper
+    if (status === 'approved' && shopOwner && shopOwner.role === 'pending_shopkeeper') {
+      await User.findByIdAndUpdate(shopOwner._id, {
+        role: 'shopkeeper'
+      });
+
+      console.log(`Updated user ${shopOwner.name} (${shopOwner.email}) role from pending_shopkeeper to shopkeeper`);
+    }
 
     // Send email notification based on status
     if (shopOwner) {

@@ -20,7 +20,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     shopName: '',
-    shopCategory: 'Grocery',
+    shopCategory: 'grocery',
     address: '',
     phone: '',
     idProof: null as File | null,
@@ -68,6 +68,32 @@ const Register = () => {
       return;
     }
 
+    // For shopkeeper registration, check if email already exists before proceeding
+    if (activeTab === 'shop' && currentStep === 3) {
+      try {
+        // Check if email already exists
+        const checkResponse = await fetch('http://localhost:5001/api/auth/check-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: formData.email }),
+        }).catch(() => null);
+
+        if (checkResponse && checkResponse.ok) {
+          const checkData = await checkResponse.json();
+          if (checkData.exists) {
+            setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        // If the check fails, we'll proceed with registration and let the server handle any duplicates
+        console.log('Email check failed, proceeding with registration');
+      }
+    }
+
     try {
       if (activeTab === 'customer') {
         // Register as a customer
@@ -111,12 +137,12 @@ const Register = () => {
 
         navigate('/dashboard');
       } else if (activeTab === 'shop' && currentStep === 3) {
-        // Register shopkeeper account first
+        // Register user with pending_shopkeeper role first
         const userData = {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: 'shopkeeper'
+          role: 'pending_shopkeeper'
         };
 
         const userResponse = await fetch('http://localhost:5001/api/auth/register', {
@@ -150,9 +176,31 @@ const Register = () => {
           shopData.append('category', formData.shopCategory);
           shopData.append('description', `${formData.shopName} - A new shop on ShowcaseConnect`);
           shopData.append('address', formData.address);
-          shopData.append('city', formData.location.address.split(',')[1]?.trim() || '');
-          shopData.append('state', formData.location.address.split(',')[2]?.trim() || '');
-          shopData.append('zipCode', formData.location.address.split(',')[3]?.trim() || '');
+          // Parse address components more reliably
+          const addressParts = formData.location.address.split(',').map(part => part.trim());
+
+          // Default values in case parsing fails
+          let city = 'Unknown City';
+          let state = 'Unknown State';
+          let zipCode = '00000';
+
+          // Try to extract city, state, and zip from address parts
+          if (addressParts.length >= 2) {
+            city = addressParts[1] || city;
+          }
+
+          if (addressParts.length >= 3) {
+            state = addressParts[2] || state;
+          }
+
+          // The last part might contain the zip code
+          if (addressParts.length >= 4) {
+            zipCode = addressParts[3] || zipCode;
+          }
+
+          shopData.append('city', city);
+          shopData.append('state', state);
+          shopData.append('zipCode', zipCode);
           shopData.append('email', formData.email);
           shopData.append('phone', formData.phone);
           shopData.append('latitude', formData.location.lat.toString());
@@ -168,6 +216,9 @@ const Register = () => {
           }
 
           try {
+            console.log('Submitting shop data with fields:',
+              Array.from(shopData.entries()).map(([key, value]) => `${key}: ${value}`).join(', '));
+
             const shopResponse = await fetch('http://localhost:5001/api/shops/register', {
               method: 'POST',
               headers: {
@@ -179,16 +230,24 @@ const Register = () => {
             const shopResponseData = await shopResponse.json();
 
             if (!shopResponse.ok) {
-              setErrorMessage(shopResponseData.message ?? 'Shop registration failed. Please try again.');
+              console.error('Shop registration failed:', shopResponseData);
+
+              // Check for specific missing fields
+              if (shopResponseData.message?.includes('required fields')) {
+                setErrorMessage('Please ensure all required fields are filled in: shop name, category, address, city, state, ZIP code, email, and phone.');
+              } else {
+                setErrorMessage(shopResponseData.message ?? 'Shop registration failed. Please try again.');
+              }
               return;
             }
 
             toast({
-              title: "Registration successful!",
-              description: "Your shop has been created. We'll review your details shortly.",
+              title: "Registration submitted!",
+              description: "Your shop application has been submitted. We'll review your details and notify you once approved.",
             });
 
-            navigate('/shopkeeper/dashboard');
+            // Navigate to a pending approval page instead of shopkeeper dashboard
+            navigate('/pending-approval');
           } catch (shopError) {
             setErrorMessage('Failed to register shop. Please try again later.');
           }
@@ -399,11 +458,22 @@ const Register = () => {
 
                           <div className="space-y-2">
                             <Label htmlFor="shopCategory">Shop Category</Label>
-                            <RadioGroup defaultValue="Grocery" className="grid grid-cols-2 gap-2 pt-2">
-                              {['Grocery', 'Electronics', 'Fashion', 'Home & Garden', 'Bakery', 'Books'].map((category) => (
-                                <div key={category} className="flex items-center space-x-2">
-                                  <RadioGroupItem value={category} id={category} />
-                                  <Label htmlFor={category}>{category}</Label>
+                            <RadioGroup
+                              defaultValue="grocery"
+                              className="grid grid-cols-2 gap-2 pt-2"
+                              onValueChange={(value) => setFormData({...formData, shopCategory: value})}
+                            >
+                              {[
+                                { value: 'grocery', label: 'Grocery' },
+                                { value: 'electronics', label: 'Electronics' },
+                                { value: 'fashion', label: 'Fashion' },
+                                { value: 'homegoods', label: 'Home & Garden' },
+                                { value: 'bakery', label: 'Bakery' },
+                                { value: 'books', label: 'Books' }
+                              ].map((category) => (
+                                <div key={category.value} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={category.value} id={category.value} />
+                                  <Label htmlFor={category.value}>{category.label}</Label>
                                 </div>
                               ))}
                             </RadioGroup>

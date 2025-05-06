@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['customer', 'shopkeeper', 'admin'],
+    enum: ['customer', 'shopkeeper', 'admin', 'pending_shopkeeper'],
     default: 'customer'
   },
   shopId: {
@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function(next) {
   // Only hash the password if it's modified or new
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

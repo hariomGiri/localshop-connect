@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    default: '/images/default-product.jpg'
+    default: 'uploads/products/default-product.jpg'
   },
   stock: {
     type: Number,
@@ -63,10 +63,10 @@ const productSchema = new mongoose.Schema({
 // Update the updatedAt field before saving
 productSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
-  
+
   // Update inStock based on stock quantity
   this.inStock = this.stock > 0;
-  
+
   next();
 });
 

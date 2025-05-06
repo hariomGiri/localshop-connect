@@ -17,7 +17,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.7,
     reviewCount: 128,
-    category: 'Grocery',
+    category: 'grocery',
     location: 'Seattle, WA',
     distance: '0.8 miles',
     address: '123 Local St, Downtown',
@@ -32,7 +32,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.5,
     reviewCount: 96,
-    category: 'Electronics',
+    category: 'electronics',
     location: 'Seattle, WA',
     distance: '1.2 miles',
     address: '456 Tech Ave, Midtown',
@@ -47,7 +47,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.9,
     reviewCount: 214,
-    category: 'Bakery',
+    category: 'bakery',
     location: 'Seattle, WA',
     distance: '0.5 miles',
     address: '78 Main St, Downtown',
@@ -62,7 +62,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.3,
     reviewCount: 85,
-    category: 'Fashion',
+    category: 'fashion',
     location: 'Seattle, WA',
     distance: '1.7 miles',
     address: '221 Style Ave, Uptown',
@@ -77,7 +77,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.6,
     reviewCount: 112,
-    category: 'Home & Garden',
+    category: 'homegoods',
     location: 'Seattle, WA',
     distance: '2.1 miles',
     address: '543 Home Blvd, Suburbs',
@@ -92,7 +92,7 @@ const mockShops = [
     imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
     rating: 4.8,
     reviewCount: 173,
-    category: 'Books',
+    category: 'books',
     location: 'Seattle, WA',
     distance: '1.0 miles',
     address: '89 Reader Lane, Downtown',
@@ -102,11 +102,24 @@ const mockShops = [
   }
 ];
 
-const categories = ['All', 'Grocery', 'Electronics', 'Fashion', 'Books', 'Bakery', 'Home & Garden'];
+// Category display mapping
+const categoryMapping = {
+  'all': 'All',
+  'grocery': 'Grocery',
+  'electronics': 'Electronics',
+  'fashion': 'Fashion',
+  'homegoods': 'Home & Garden',
+  'bakery': 'Bakery',
+  'books': 'Books',
+  'other': 'Other'
+};
+
+// Categories for filtering - must match backend values
+const categories = ['all', 'grocery', 'electronics', 'fashion', 'books', 'bakery', 'homegoods', 'other'];
 
 const Shops = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -166,7 +179,7 @@ const Shops = () => {
   // Filter shops based on search term and category
   const filteredShops = shops.filter(shop => {
     const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || shop.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || shop.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -215,7 +228,7 @@ const Shops = () => {
                   onClick={() => setSelectedCategory(category)}
                   className="rounded-full"
                 >
-                  {category}
+                  {categoryMapping[category as keyof typeof categoryMapping]}
                 </Button>
               ))}
             </div>

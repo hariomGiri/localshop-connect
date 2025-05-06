@@ -8,6 +8,19 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Create subdirectories for different types of uploads
+const productUploadsDir = path.join(uploadsDir, 'products');
+const shopUploadsDir = path.join(uploadsDir, 'shops');
+const idProofsDir = path.join(uploadsDir, 'id-proofs');
+const businessDocsDir = path.join(uploadsDir, 'business-docs');
+
+// Create these directories if they don't exist
+[productUploadsDir, shopUploadsDir, idProofsDir, businessDocsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

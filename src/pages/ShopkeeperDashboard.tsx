@@ -175,12 +175,19 @@ const ShopkeeperDashboard = () => {
 
             <div className="flex mt-4 md:mt-0 space-x-4">
               {shop?.status === 'approved' && (
-                <Button asChild>
-                  <Link to="/shopkeeper/create-product">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Product
-                  </Link>
-                </Button>
+                <>
+                  <Button asChild>
+                    <Link to="/shopkeeper/create-product">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Product
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/shopkeeper/profile">
+                      Edit Shop Profile
+                    </Link>
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -375,9 +382,31 @@ const ShopkeeperDashboard = () => {
                       <CardDescription>Manage your shop details</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground mb-8">
-                        Shop settings and profile management will be available here.
-                      </p>
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-medium mb-2">Shop Profile</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Update your shop details, address, and contact information
+                          </p>
+                          <Button asChild>
+                            <Link to="/shopkeeper/profile">
+                              Edit Shop Profile
+                            </Link>
+                          </Button>
+                        </div>
+
+                        <div className="pt-6 border-t">
+                          <h3 className="text-lg font-medium mb-2">Shop Appearance</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Customize how your shop appears to customers
+                          </p>
+                          <Button variant="outline" asChild>
+                            <Link to="/shopkeeper/profile">
+                              Manage Appearance
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>

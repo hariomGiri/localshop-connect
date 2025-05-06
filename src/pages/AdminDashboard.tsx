@@ -118,8 +118,8 @@ const AdminDashboard = () => {
       }
 
       const url = status === 'approved'
-        ? `http://localhost:5000/api/shops/${shopId}/approve`
-        : `http://localhost:5000/api/shops/${shopId}/reject`;
+        ? `http://localhost:5001/api/shops/${shopId}/approve`
+        : `http://localhost:5001/api/shops/${shopId}/reject`;
 
       const response = await fetch(url, {
         method: 'PUT',
@@ -464,7 +464,7 @@ const AdminDashboard = () => {
                       button.innerText = 'Sending...';
 
                       // Send test email
-                      fetch('http://localhost:5000/api/admin/test-email', {
+                      fetch('http://localhost:5001/api/admin/test-email', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
@@ -541,7 +541,12 @@ const AdminDashboard = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedShop && (
+          {!selectedShop ? (
+            <div className="flex justify-center items-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin mr-2" />
+              <span>Loading shop details...</span>
+            </div>
+          ) : (
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -554,7 +559,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Owner</h4>
-                  <p className="text-base">{selectedShop.owner?.name || 'Unknown'}</p>
+                  <p className="text-base">{selectedShop.owner?.name ?? 'Unknown'}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Submitted On</h4>
@@ -564,12 +569,56 @@ const AdminDashboard = () => {
 
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Description</h4>
-                <p className="text-sm text-muted-foreground">{selectedShop.description || 'No description provided'}</p>
+                <p className="text-sm text-muted-foreground">{selectedShop.description ?? 'No description provided'}</p>
               </div>
 
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Address</h4>
-                <p className="text-sm text-muted-foreground">{selectedShop.address || 'No address provided'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedShop.address && typeof selectedShop.address === 'object' ? (
+                    <>
+                      {selectedShop.address.street}, {selectedShop.address.city}, {selectedShop.address.state}, {selectedShop.address.zipCode}
+                    </>
+                  ) : (
+                    'No address provided'
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Contact Information</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email:</p>
+                    <p className="text-sm">{selectedShop.contact?.email ?? 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone:</p>
+                    <p className="text-sm">{selectedShop.contact?.phone ?? 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Documents</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">ID Proof:</p>
+                    <p className="text-sm">
+                      {selectedShop.documents?.idProof ? (
+                        <a href={`http://localhost:5001/${selectedShop.documents.idProof}`} target="_blank" className="text-blue-500 hover:underline">View Document</a>
+                      ) : 'Not provided'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Business Document:</p>
+                    <p className="text-sm">
+                      {selectedShop.documents?.businessDocument ? (
+                        <a href={`http://localhost:5001/${selectedShop.documents.businessDocument}`} target="_blank" className="text-blue-500 hover:underline">View Document</a>
+                      ) : 'Not provided'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">

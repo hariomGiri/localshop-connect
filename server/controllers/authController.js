@@ -175,3 +175,30 @@ export const updateProfile = async (req, res) => {
     });
   }
 };
+
+// Check if email already exists
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Check if user with this email exists
+    const existingUser = await User.findOne({ email });
+
+    res.status(200).json({
+      success: true,
+      exists: !!existingUser
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

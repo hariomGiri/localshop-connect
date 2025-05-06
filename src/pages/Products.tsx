@@ -19,7 +19,7 @@ const mockProducts = [
     name: 'Organic Fresh Vegetables Bundle',
     description: 'A selection of seasonal organic vegetables sourced from local farms',
     imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 24.99,
+    price: 1999,
     shop: 'Green Market Fresh',
     shopId: '1',
     category: 'Grocery',
@@ -32,7 +32,7 @@ const mockProducts = [
     name: 'Wireless Noise-Cancelling Headphones',
     description: 'Premium over-ear headphones with active noise cancellation and 30-hour battery life',
     imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 199.99,
+    price: 14999,
     shop: 'Tech Haven',
     shopId: '2',
     category: 'Electronics',
@@ -45,7 +45,7 @@ const mockProducts = [
     name: 'Artisan Sourdough Bread',
     description: 'Handcrafted sourdough bread made with a 100-year-old starter and organic flour',
     imageUrl: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 8.50,
+    price: 850,
     shop: 'Artisan Bakery',
     shopId: '3',
     category: 'Bakery',
@@ -58,7 +58,7 @@ const mockProducts = [
     name: 'Sustainable Cotton T-shirt',
     description: 'Eco-friendly t-shirt made from 100% organic cotton with minimal environmental impact',
     imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 29.99,
+    price: 2999,
     shop: 'Fashion Forward',
     shopId: '4',
     category: 'Fashion',
@@ -71,7 +71,7 @@ const mockProducts = [
     name: 'Indoor Plant Collection',
     description: 'Set of 3 easy-care indoor plants perfect for purifying air and adding greenery to your space',
     imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 49.99,
+    price: 4999,
     shop: 'Home & Garden Center',
     shopId: '5',
     category: 'Home & Garden',
@@ -84,7 +84,7 @@ const mockProducts = [
     name: 'Bestseller Book Bundle',
     description: 'Collection of this month\'s top 3 bestselling fiction novels',
     imageUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    price: 45.00,
+    price: 4500,
     shop: 'Book Nook',
     shopId: '6',
     category: 'Books',
@@ -116,6 +116,24 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
           src={product.imageUrl}
           alt={product.name}
           className="w-full h-full object-cover transform transition hover:scale-105"
+          onError={(e) => {
+            // If image fails to load, use a category-specific fallback image
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; // Prevent infinite loop
+
+            // Use different fallback images based on product category
+            const categoryImageMap: Record<string, string> = {
+              'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Home & Garden': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+            };
+
+            // Use the category-specific image or a generic fallback
+            target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+          }}
         />
       </div>
       <CardContent className="py-4 flex-grow">

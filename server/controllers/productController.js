@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import Shop from '../models/Shop.js';
 
@@ -35,6 +36,11 @@ export const createProduct = async (req, res) => {
 
     // Create product
     const product = await Product.create(productData);
+
+    // Update shop's product count
+    const productCount = await Product.countDocuments({ shop: shop._id });
+    shop.productCount = productCount;
+    await shop.save();
 
     res.status(201).json({
       success: true,
@@ -177,6 +183,11 @@ export const updateProduct = async (req, res) => {
       runValidators: true
     });
 
+    // Update shop's product count (not strictly necessary for updates, but ensures consistency)
+    const productCount = await Product.countDocuments({ shop: shop._id });
+    shop.productCount = productCount;
+    await shop.save();
+
     res.status(200).json({
       success: true,
       data: product
@@ -213,6 +224,11 @@ export const deleteProduct = async (req, res) => {
     }
 
     await product.deleteOne();
+
+    // Update shop's product count after deletion
+    const productCount = await Product.countDocuments({ shop: shop._id });
+    shop.productCount = productCount;
+    await shop.save();
 
     res.status(200).json({
       success: true,

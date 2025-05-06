@@ -21,6 +21,7 @@ import UserDashboard from "./pages/UserDashboard";
 import CreateShop from "./pages/CreateShop";
 import CreateProduct from "./pages/CreateProduct";
 import EditProduct from "./pages/EditProduct";
+import ShopProfile from "./pages/ShopProfile";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -28,6 +29,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import PendingApproval from "./pages/PendingApproval";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -49,6 +51,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/pending-approval" element={<PendingApproval />} />
 
               {/* Protected routes for all authenticated users */}
               <Route path="/cart" element={
@@ -114,6 +117,11 @@ function App() {
               <Route path="/shopkeeper/edit-product/:id" element={
                 <ProtectedRoute allowedRoles={['shopkeeper']}>
                   <EditProduct />
+                </ProtectedRoute>
+              } />
+              <Route path="/shopkeeper/profile" element={
+                <ProtectedRoute allowedRoles={['shopkeeper']}>
+                  <ShopProfile />
                 </ProtectedRoute>
               } />
 

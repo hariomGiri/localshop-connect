@@ -14,6 +14,10 @@ const shopSchema = new mongoose.Schema({
     minlength: [10, 'Description must be at least 10 characters'],
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
+  imageUrl: {
+    type: String,
+    default: 'uploads/shops/default-shop.jpg'
+  },
   category: {
     type: String,
     required: [true, 'Category is required'],
@@ -96,6 +100,10 @@ const shopSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  productCount: {
+    type: Number,
+    default: 0
   }
 });
 

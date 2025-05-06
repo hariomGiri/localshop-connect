@@ -70,7 +70,10 @@ const EditProduct = () => {
 
         setFormData(data.data);
         if (data.data.imageUrl) {
-          setImagePreview(`http://localhost:5001/${data.data.imageUrl}`);
+          // Add timestamp to prevent caching
+          const timestamp = new Date().getTime();
+          const imageUrl = data.data.imageUrl.replace('uploads/', '');
+          setImagePreview(`http://localhost:5001/uploads/${imageUrl}?nocache=${timestamp}`);
         }
       } catch (error) {
         toast({

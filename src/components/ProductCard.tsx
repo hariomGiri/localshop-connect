@@ -62,7 +62,7 @@ const ProductCard = ({ product, compact = false }: ProductCardProps) => {
         imageUrl: product.imageUrl,
         category: product.category
       });
-      
+
       toast({
         title: "Pre-ordered successfully",
         description: `${product.name} has been pre-ordered. We'll notify you when it's available.`,
@@ -76,7 +76,8 @@ const ProductCard = ({ product, compact = false }: ProductCardProps) => {
       return 'Pre-order';
     }
 
-    if (isInCart(product.id)) {
+    // Use optional chaining to safely call isInCart
+    if (isInCart?.(product.id)) {
       return (
         <span className="flex items-center justify-center">
           <Check className="h-4 w-4 mr-2" />
@@ -95,6 +96,31 @@ const ProductCard = ({ product, compact = false }: ProductCardProps) => {
           src={product.imageUrl}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            // If image fails to load, use a category-specific fallback image
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; // Prevent infinite loop
+
+            // Use different fallback images based on product category
+            const categoryImageMap: Record<string, string> = {
+              'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Pantry': 'https://images.unsplash.com/photo-1584473457406-6240486418e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Confectionery': 'https://images.unsplash.com/photo-1548907040-4d42bfc87a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'audio': 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'accessories': 'https://images.unsplash.com/photo-1523206489230-c012c64b2b48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'ethnic wear': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+            };
+
+            // Use the category-specific image or a generic fallback
+            target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+          }}
         />
         {!product.inStock && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -115,13 +141,13 @@ const ProductCard = ({ product, compact = false }: ProductCardProps) => {
         )}
         <div className="flex justify-between items-center mb-3">
           <span className="text-sm font-medium">{product.shop}</span>
-          {product.rating && (
+          {Boolean(product.rating) && (
             <span className="flex items-center text-sm">
               ★ {product.rating}
             </span>
           )}
         </div>
-        {product.tags && product.tags.length > 0 && (
+        {Boolean(product.tags?.length) && (
           <div className="flex flex-wrap gap-1 mt-auto">
             {product.tags.slice(0, 3).map(tag => (
               <Badge key={tag} variant="outline" className="text-xs">

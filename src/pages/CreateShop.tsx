@@ -78,7 +78,7 @@ const CreateShop = () => {
       formData.append('phone', data.phone);
 
       // Make API call to create shop
-      const response = await fetch('http://localhost:5000/api/shops/register', {
+      const response = await fetch('http://localhost:5001/api/shops/register', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
