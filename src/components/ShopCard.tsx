@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Star, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getShopFallbackImage } from '@/utils/imageUtils';
 
 export interface Shop {
   id: string;
@@ -40,11 +41,7 @@ const ShopCard = ({ shop, featured = false }: ShopCardProps) => {
       {/* Image container */}
       <div className="relative aspect-[16/9] overflow-hidden">
         <img
-          src={
-            shop.imageUrl.startsWith('http')
-              ? shop.imageUrl
-              : `http://localhost:5001/uploads/${shop.imageUrl.replace('uploads/', '')}?nocache=${new Date().getTime()}`
-          }
+          src={shop.imageUrl}
           alt={shop.name}
           className={cn(
             "w-full h-full object-cover transition-transform duration-700",
@@ -52,10 +49,10 @@ const ShopCard = ({ shop, featured = false }: ShopCardProps) => {
           )}
           loading="lazy"
           onError={(e) => {
-            // If image fails to load, use a fallback image
+            // If image fails to load, use a category-specific fallback image
             const target = e.target as HTMLImageElement;
             target.onerror = null; // Prevent infinite loop
-            target.src = 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            target.src = getShopFallbackImage(shop.category);
           }}
         />
 

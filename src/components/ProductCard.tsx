@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/components/ui/use-toast';
+import { getProductFallbackImage } from '@/utils/imageUtils';
 
 export interface Product {
   id: string;
@@ -100,26 +100,7 @@ const ProductCard = ({ product, compact = false }: ProductCardProps) => {
             // If image fails to load, use a category-specific fallback image
             const target = e.target as HTMLImageElement;
             target.onerror = null; // Prevent infinite loop
-
-            // Use different fallback images based on product category
-            const categoryImageMap: Record<string, string> = {
-              'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Pantry': 'https://images.unsplash.com/photo-1584473457406-6240486418e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Confectionery': 'https://images.unsplash.com/photo-1548907040-4d42bfc87a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'audio': 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'accessories': 'https://images.unsplash.com/photo-1523206489230-c012c64b2b48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'ethnic wear': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            };
-
-            // Use the category-specific image or a generic fallback
-            target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            target.src = getProductFallbackImage(product.category);
           }}
         />
         {!product.inStock && (

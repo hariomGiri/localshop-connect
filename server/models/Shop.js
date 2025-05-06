@@ -18,6 +18,10 @@ const shopSchema = new mongoose.Schema({
     type: String,
     default: 'uploads/shops/default-shop.jpg'
   },
+  coverImage: {
+    type: String,
+    default: 'uploads/shops/default-cover.jpg'
+  },
   category: {
     type: String,
     required: [true, 'Category is required'],

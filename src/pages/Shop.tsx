@@ -24,6 +24,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getProductFallbackImage, getShopFallbackImage } from '@/utils/imageUtils';
+import { shopAPI, productAPI } from '@/lib/api';
 
 // Mock product data
 const mockProducts = [
@@ -121,22 +123,42 @@ const Shop = () => {
       try {
         setLoading(true);
 
-        // Fetch shop data
-        const shopResponse = await fetch(`http://localhost:5001/api/shops/${id}`);
-        const shopData = await shopResponse.json();
+        // Fetch shop data using the API utility
+        const shopResponse = await shopAPI.getShop(id as string);
 
-        if (!shopResponse.ok) {
-          throw new Error(shopData.message || 'Failed to fetch shop data');
+        if (!shopResponse.success) {
+          throw new Error(shopResponse.message || 'Failed to fetch shop data');
         }
 
-        setShop(shopData.data);
+        setShop(shopResponse.data);
 
-        // Fetch products for this shop
-        const productsResponse = await fetch(`http://localhost:5001/api/products/shop/${id}`);
-        const productsData = await productsResponse.json();
+        // Fetch products for this shop using the API utility
+        const productsResponse = await productAPI.getShopProducts(id as string);
 
-        if (productsResponse.ok) {
-          setProducts(productsData.data || []);
+        if (productsResponse.success) {
+          // Process product data to ensure image URLs are correct
+          const processedProducts = (productsResponse.data || []).map((product: any) => {
+            // Process image URL
+            let imageUrl = product.imageUrl;
+            if (imageUrl) {
+              if (!imageUrl.startsWith('http')) {
+                imageUrl = `http://localhost:5001/${imageUrl}`;
+              }
+            } else {
+              imageUrl = getProductFallbackImage(product.category);
+            }
+
+            // Return processed product
+            return {
+              ...product,
+              imageUrl,
+              inStock: product.inStock !== undefined ? product.inStock : true
+            };
+          });
+
+          setProducts(processedProducts);
+        } else {
+          throw new Error(productsResponse.message || 'Failed to fetch product data');
         }
       } catch (error) {
         console.error('Error fetching shop data:', error);
@@ -252,10 +274,10 @@ const Shop = () => {
                     alt={shop.name}
                     className="w-20 h-20 md:w-24 md:h-24 object-cover bg-white"
                     onError={(e) => {
-                      // If image fails to load, use a fallback image
+                      // If image fails to load, use a category-specific fallback image
                       const target = e.target as HTMLImageElement;
                       target.onerror = null; // Prevent infinite loop
-                      target.src = 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
+                      target.src = getShopFallbackImage(shop.category);
                     }}
                   />
                 </div>
@@ -442,26 +464,7 @@ const Shop = () => {
                                 // If image fails to load, use a category-specific fallback image
                                 const target = e.target as HTMLImageElement;
                                 target.onerror = null; // Prevent infinite loop
-
-                                // Use different fallback images based on product category
-                                const categoryImageMap: Record<string, string> = {
-                                  'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Pantry': 'https://images.unsplash.com/photo-1584473457406-6240486418e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Confectionery': 'https://images.unsplash.com/photo-1548907040-4d42bfc87a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'audio': 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'accessories': 'https://images.unsplash.com/photo-1523206489230-c012c64b2b48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'ethnic wear': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-                                };
-
-                                // Use the category-specific image or a generic fallback
-                                target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                                target.src = getProductFallbackImage(product.category);
                               }}
                               alt={product.name}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -479,6 +482,9 @@ const Shop = () => {
                             <h3 className="font-medium text-lg mb-1 group-hover:text-primary transition-colors">
                               {product.name}
                             </h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                              {product.description || 'No description available'}
+                            </p>
                             <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
                             <Button
                               className="w-full mt-3"
@@ -504,26 +510,7 @@ const Shop = () => {
                                 // If image fails to load, use a category-specific fallback image
                                 const target = e.target as HTMLImageElement;
                                 target.onerror = null; // Prevent infinite loop
-
-                                // Use different fallback images based on product category
-                                const categoryImageMap: Record<string, string> = {
-                                  'Fruits': 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Vegetables': 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Dairy': 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Pantry': 'https://images.unsplash.com/photo-1584473457406-6240486418e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Confectionery': 'https://images.unsplash.com/photo-1548907040-4d42bfc87a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'audio': 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'accessories': 'https://images.unsplash.com/photo-1523206489230-c012c64b2b48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                                  'ethnic wear': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-                                };
-
-                                // Use the category-specific image or a generic fallback
-                                target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+                                target.src = getProductFallbackImage(product.category);
                               }}
                             />
                             {!product.inStock && (
@@ -541,9 +528,9 @@ const Shop = () => {
                                 {product.name}
                               </h3>
                               <p className="text-muted-foreground">{product.category}</p>
-                              {product.description && (
-                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{product.description}</p>
-                              )}
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                                {product.description || 'No description available'}
+                              </p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
                               <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>

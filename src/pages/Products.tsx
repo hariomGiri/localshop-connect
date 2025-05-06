@@ -11,6 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
+import { getProductFallbackImage } from '@/utils/imageUtils';
 
 // Mock product data
 const mockProducts = [
@@ -121,18 +122,8 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null; // Prevent infinite loop
 
-            // Use different fallback images based on product category
-            const categoryImageMap: Record<string, string> = {
-              'Grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              'Home & Garden': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-            };
-
-            // Use the category-specific image or a generic fallback
-            target.src = categoryImageMap[product.category] || 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            // Use the utility function to get a category-specific fallback image
+            target.src = getProductFallbackImage(product.category);
           }}
         />
       </div>

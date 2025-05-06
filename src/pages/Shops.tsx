@@ -136,7 +136,28 @@ const Shops = () => {
           const apiShops = response.data.map((shop: any) => ({
             id: shop._id,
             name: shop.name,
-            imageUrl: shop.imageUrl ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Default image if none provided
+            imageUrl: (() => {
+              if (shop.imageUrl) {
+                if (shop.imageUrl.startsWith('http')) {
+                  return shop.imageUrl;
+                } else {
+                  // For server-stored images, use the full path
+                  return `http://localhost:5001/${shop.imageUrl}`;
+                }
+              } else {
+                // Default image based on category
+                const categoryImageMap: Record<string, string> = {
+                  'grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'bakery': 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'homegoods': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+                  'other': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                };
+                return categoryImageMap[shop.category] || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+              }
+            })(),
             rating: shop.rating ?? 4.5,
             reviewCount: shop.reviewCount ?? 0,
             category: shop.category,
