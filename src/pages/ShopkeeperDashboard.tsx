@@ -12,26 +12,22 @@ import { toast } from '@/components/ui/use-toast';
 const ShopkeeperDashboard = () => {
   const navigate = useNavigate();
 
-  // State for shop data
+  // State for shop and product data
   const [shop, setShop] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [productCount, setProductCount] = useState(0);
 
-  // Mock data for shopkeeper dashboard
+  // Mock data for shopkeeper dashboard (orders will be implemented later)
   const recentOrders = [
-    { id: '1', customer: 'John Smith', items: 3, total: '$45.97', status: 'pending', date: '2023-05-17' },
-    { id: '2', customer: 'Emily Johnson', items: 1, total: '$24.99', status: 'completed', date: '2023-05-16' },
-    { id: '3', customer: 'Michael Brown', items: 2, total: '$34.50', status: 'completed', date: '2023-05-15' },
+    { id: '1', customer: 'John Smith', items: 3, total: '₹4,597', status: 'pending', date: '2023-05-17' },
+    { id: '2', customer: 'Emily Johnson', items: 1, total: '₹2,499', status: 'completed', date: '2023-05-16' },
+    { id: '3', customer: 'Michael Brown', items: 2, total: '₹3,450', status: 'completed', date: '2023-05-15' },
   ];
 
-  const popularProducts = [
-    { id: '1', name: 'Organic Apples', stock: 48, price: '$4.99', sales: 120 },
-    { id: '2', name: 'Free Range Eggs', stock: 24, price: '$6.99', sales: 85 },
-    { id: '3', name: 'Sourdough Bread', stock: 12, price: '$5.49', sales: 72 },
-  ];
-
-  // Fetch shop data
+  // Fetch shop and product data
   useEffect(() => {
-    const fetchShopData = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
 
@@ -45,24 +41,42 @@ const ShopkeeperDashboard = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/shops/user/myshop', {
+        // Fetch shop data
+        const shopResponse = await fetch('http://localhost:5001/api/shops/user/myshop', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        const data = await response.json();
+        const shopData = await shopResponse.json();
 
-        if (!response.ok) {
-          if (response.status === 404) {
+        if (!shopResponse.ok) {
+          if (shopResponse.status === 404) {
             // No shop found, redirect to create shop page
             navigate('/create-shop');
             return;
           }
-          throw new Error(data.message ?? 'Failed to fetch shop data');
+          throw new Error(shopData.message ?? 'Failed to fetch shop data');
         }
 
-        setShop(data.data);
+        setShop(shopData.data);
+
+        // Only fetch products if shop is approved
+        if (shopData.data.status === 'approved') {
+          // Fetch products data
+          const productsResponse = await fetch('http://localhost:5001/api/products/my/products', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          const productsData = await productsResponse.json();
+
+          if (productsResponse.ok) {
+            setProducts(productsData.data || []);
+            setProductCount(productsData.count || 0);
+          }
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -74,7 +88,7 @@ const ShopkeeperDashboard = () => {
       }
     };
 
-    fetchShopData();
+    fetchData();
   }, [navigate]);
 
   // If loading, show loading state
@@ -184,8 +198,8 @@ const ShopkeeperDashboard = () => {
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">48</div>
-                    <p className="text-xs text-muted-foreground">+5 new this month</p>
+                    <div className="text-2xl font-bold">{productCount}</div>
+                    <p className="text-xs text-muted-foreground">{productCount > 0 ? 'Products in your inventory' : 'No products yet'}</p>
                   </CardContent>
                 </Card>
 
@@ -195,7 +209,7 @@ const ShopkeeperDashboard = () => {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">$2,845</div>
+                    <div className="text-2xl font-bold">₹28,450</div>
                     <p className="text-xs text-muted-foreground">+12% from last month</p>
                   </CardContent>
                 </Card>
@@ -282,25 +296,37 @@ const ShopkeeperDashboard = () => {
                           <div>Actions</div>
                         </div>
 
-                        {popularProducts.map((product) => (
-                          <div key={product.id} className="grid grid-cols-5 p-3 text-sm border-t items-center">
-                            <div className="font-medium">{product.name}</div>
-                            <div>
-                              {product.stock < 20 ? (
-                                <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
-                                  Low: {product.stock}
-                                </Badge>
-                              ) : (
-                                product.stock
-                              )}
+                        {products.length > 0 ? (
+                          products.map((product) => (
+                            <div key={product._id} className="grid grid-cols-5 p-3 text-sm border-t items-center">
+                              <div className="font-medium">{product.name}</div>
+                              <div>
+                                {product.stock < 20 ? (
+                                  <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+                                    Low: {product.stock}
+                                  </Badge>
+                                ) : (
+                                  product.stock
+                                )}
+                              </div>
+                              <div>₹{product.price.toFixed(2)}</div>
+                              <div>{product.sales || 0}</div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => navigate(`/shopkeeper/edit-product/${product._id}`)}
+                                >
+                                  Edit
+                                </Button>
+                              </div>
                             </div>
-                            <div>{product.price}</div>
-                            <div>{product.sales}</div>
-                            <div className="flex space-x-2">
-                              <Button size="sm" variant="outline">Edit</Button>
-                            </div>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center text-muted-foreground">
+                            No products found. Click "Add Product" to create your first product.
                           </div>
-                        ))}
+                        )}
                       </div>
                     </CardContent>
                   </Card>

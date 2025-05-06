@@ -17,10 +17,17 @@ import Products from "./pages/Products";
 import HowItWorks from "./pages/HowItWorks";
 import AdminDashboard from "./pages/AdminDashboard";
 import ShopkeeperDashboard from "./pages/ShopkeeperDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import CreateShop from "./pages/CreateShop";
 import CreateProduct from "./pages/CreateProduct";
+import EditProduct from "./pages/EditProduct";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient());
@@ -49,6 +56,36 @@ function App() {
                   <Cart />
                 </ProtectedRoute>
               } />
+              <Route path="/checkout" element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-confirmation" element={
+                <ProtectedRoute>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              } />
+              <Route path="/orders" element={
+                <ProtectedRoute>
+                  <Orders />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <UserDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
 
               {/* Admin routes */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -72,6 +109,11 @@ function App() {
               <Route path="/shopkeeper/create-product" element={
                 <ProtectedRoute allowedRoles={['shopkeeper']}>
                   <CreateProduct />
+                </ProtectedRoute>
+              } />
+              <Route path="/shopkeeper/edit-product/:id" element={
+                <ProtectedRoute allowedRoles={['shopkeeper']}>
+                  <EditProduct />
                 </ProtectedRoute>
               } />
 

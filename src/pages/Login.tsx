@@ -13,16 +13,18 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(''); // Clear any previous error messages
 
     try {
       // Connect to the real backend API
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('http://localhost:5001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +35,13 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        // Handle specific error cases
+        if (response.status === 401) {
+          setErrorMessage('Invalid email or password. Please try again.');
+        } else {
+          setErrorMessage(data.message ?? 'Login failed. Please try again.');
+        }
+        return;
       }
 
       // Store token and user data in localStorage
@@ -50,12 +58,16 @@ const Login = () => {
         navigate('/shopkeeper/dashboard');
       } else if (data.user.role === 'admin') {
         navigate('/admin/dashboard');
+      } else if (data.user.role === 'customer') {
+        navigate('/dashboard');
       } else {
-        // Default for customers
+        // Default fallback
         navigate('/');
       }
 
     } catch (error) {
+      setErrorMessage('An unexpected error occurred. Please try again later.');
+
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -84,6 +96,11 @@ const Login = () => {
 
         {/* Login form */}
         <div className="bg-white py-8 px-6 shadow-sm rounded-xl border sm:px-10">
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+              {errorMessage}
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
@@ -96,6 +113,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                className={errorMessage ? "border-red-300 focus-visible:ring-red-400" : ""}
               />
             </div>
 
@@ -118,6 +136,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                className={errorMessage ? "border-red-300 focus-visible:ring-red-400" : ""}
               />
             </div>
 

@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import ShopSection from '@/components/ShopSection';
+import ProductSection from '@/components/ProductSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -14,7 +15,8 @@ const Index = () => {
         <Hero />
         <Features />
         <ShopSection />
-        
+        <ProductSection />
+
         {/* Additional section: How It Works */}
         <section className="py-20 px-6">
           <div className="max-w-7xl mx-auto text-center">
@@ -25,7 +27,7 @@ const Index = () => {
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-16">
               ShowcaseConnect makes it simple to discover, compare, and shop from local businesses in your neighborhood.
             </p>
-            
+
             {/* Steps */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {/* Step 1 */}
@@ -38,7 +40,7 @@ const Index = () => {
                   Find shops near you through geolocation search and browse their products in real-time.
                 </p>
               </div>
-              
+
               {/* Step 2 */}
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -49,7 +51,7 @@ const Index = () => {
                   Compare prices, read reviews, and find the best products and services for your needs.
                 </p>
               </div>
-              
+
               {/* Step 3 */}
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -63,7 +65,7 @@ const Index = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="py-16 px-6 bg-primary">
           <div className="max-w-5xl mx-auto flex flex-col items-center text-center">
@@ -74,14 +76,14 @@ const Index = () => {
               Join thousands of local businesses already thriving on our platform. It's free to get started!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <a 
-                href="/register?type=shop" 
+              <a
+                href="/register?type=shop"
                 className="px-6 py-3 bg-white text-primary rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
               >
                 Register Your Shop
               </a>
-              <a 
-                href="/how-it-works" 
+              <a
+                href="/how-it-works"
                 className="px-6 py-3 bg-transparent border border-white text-white rounded-lg font-medium hover:bg-white/10 transition-all"
               >
                 Learn More

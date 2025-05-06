@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import ShopCard, { Shop } from './ShopCard';
 import { useIsVisible } from '@/hooks/useIsVisible';
 import { MapPin, Filter, ArrowRight } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { shopAPI } from '@/lib/api';
 
 // Mock data for shops
 const mockShops: Shop[] = [
@@ -74,19 +76,77 @@ const categories = [
 
 const ShopSection = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [filteredShops, setFilteredShops] = useState<Shop[]>(mockShops);
+  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
   const [isVisible, ref] = useIsVisible({ threshold: 0.1 });
-  
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch shops from API
   useEffect(() => {
-    if (selectedCategory === 'All') {
-      setFilteredShops(mockShops);
-    } else {
-      setFilteredShops(mockShops.filter(shop => shop.category === selectedCategory));
-    }
-  }, [selectedCategory]);
-  
+    const fetchShops = async () => {
+      try {
+        setLoading(true);
+        const response = await shopAPI.getShops();
+
+        if (response.success && response.data) {
+          // Transform API data to match Shop interface
+          const apiShops = response.data.map((shop: any) => ({
+            id: shop._id,
+            name: shop.name,
+            imageUrl: shop.imageUrl ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Default image if none provided
+            rating: shop.rating ?? 4.5,
+            reviewCount: shop.reviewCount ?? 0,
+            category: shop.category,
+            distance: '1.0 miles', // This would need to be calculated based on user location
+            address: shop.address?.street ? `${shop.address.street}, ${shop.address.city}` : 'Address not available',
+            isOpen: true, // This would need to be determined based on shop hours
+            products: shop.productCount ?? 0,
+            tags: shop.tags ?? [shop.category]
+          }));
+
+          if (selectedCategory === 'All') {
+            setFilteredShops(apiShops);
+          } else {
+            setFilteredShops(apiShops.filter((shop: Shop) => shop.category === selectedCategory));
+          }
+        } else {
+          // If API call fails, use mock data as fallback
+          if (selectedCategory === 'All') {
+            setFilteredShops(mockShops);
+          } else {
+            setFilteredShops(mockShops.filter(shop => shop.category === selectedCategory));
+          }
+
+          toast({
+            title: "Notice",
+            description: "Using demo data as we couldn't fetch shops from the server",
+            variant: "default"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching shops:", error);
+        // Use mock data as fallback
+        if (selectedCategory === 'All') {
+          setFilteredShops(mockShops);
+        } else {
+          setFilteredShops(mockShops.filter(shop => shop.category === selectedCategory));
+        }
+
+        toast({
+          title: "Error",
+          description: "Failed to load shops. Using demo data instead.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
+  }, [selectedCategory, toast]);
+
   return (
-    <section 
+    <section
       className="py-20 px-6 bg-gray-50"
       ref={ref as React.RefObject<HTMLDivElement>}
     >
@@ -102,9 +162,9 @@ const ShopSection = () => {
               Browse and connect with local businesses in your area offering quality products and services.
             </p>
           </div>
-          
+
           <Link to="/shops">
-            <Button 
+            <Button
               variant="outline"
               className="flex items-center gap-2"
             >
@@ -113,7 +173,7 @@ const ShopSection = () => {
             </Button>
           </Link>
         </div>
-        
+
         {/* Location and filter controls */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           {/* Current location */}
@@ -124,14 +184,14 @@ const ShopSection = () => {
               Change
             </Button>
           </div>
-          
+
           {/* Filter button */}
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Filters
           </Button>
         </div>
-        
+
         {/* Category selector */}
         <div className="flex overflow-x-auto pb-4 mb-8 hide-scrollbar">
           <div className="flex space-x-2">
@@ -150,22 +210,33 @@ const ShopSection = () => {
             ))}
           </div>
         </div>
-        
-        {/* Shops grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredShops.map((shop, index) => (
-            <div 
-              key={shop.id}
-              className={`${isVisible ? 'animate-fade-up' : 'opacity-0'}`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <ShopCard shop={shop} featured={index === 0} />
+
+        {/* Loading state */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" aria-hidden="true">
             </div>
-          ))}
-        </div>
-        
+            <p className="mt-4 text-lg font-medium">Loading shops...</p>
+          </div>
+        )}
+
+        {/* Shops grid */}
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredShops.map((shop, index) => (
+              <div
+                key={shop.id}
+                className={`${isVisible ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <ShopCard shop={shop} featured={index === 0} />
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* No results message */}
-        {filteredShops.length === 0 && (
+        {!loading && filteredShops.length === 0 && (
           <div className="text-center py-12">
             <p className="text-lg font-medium mb-2">No shops found</p>
             <p className="text-muted-foreground">

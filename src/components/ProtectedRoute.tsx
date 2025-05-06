@@ -19,21 +19,21 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        
+
         if (!token) {
           setIsAuthenticated(false);
           setHasRequiredRole(false);
           setIsLoading(false);
           return;
         }
-        
+
         // Verify token with backend
-        const response = await fetch('http://localhost:5000/api/auth/me', {
+        const response = await fetch('http://localhost:5001/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!response.ok) {
           // Token is invalid or expired
           localStorage.removeItem('token');
@@ -43,14 +43,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
           setIsLoading(false);
           return;
         }
-        
+
         const data = await response.json();
-        
+
         // Update user data in localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         setIsAuthenticated(true);
-        
+
         // Check if user has required role
         if (allowedRoles.length === 0 || allowedRoles.includes(data.user.role)) {
           setHasRequiredRole(true);
@@ -62,7 +62,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
             variant: "destructive"
           });
         }
-        
+
       } catch (error) {
         console.error('Auth check failed:', error);
         setIsAuthenticated(false);
@@ -71,10 +71,10 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, [allowedRoles, toast]);
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -85,12 +85,12 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
     // Redirect to login page with return URL
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
+
   if (!hasRequiredRole) {
     // Redirect based on user role
     const userString = localStorage.getItem('user');
@@ -102,11 +102,11 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
         return <Navigate to="/shopkeeper/dashboard" replace />;
       }
     }
-    
+
     // Default redirect to home
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 };
 

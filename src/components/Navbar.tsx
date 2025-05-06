@@ -212,6 +212,15 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 )}
 
+                {user.role === 'customer' && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center gap-2 w-full cursor-pointer">
+                      <LayoutDashboard className="h-4 w-4" />
+                      My Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="flex items-center gap-2 w-full cursor-pointer">
                     <User className="h-4 w-4" />
@@ -388,6 +397,19 @@ const Navbar = () => {
                       </Button>
                     </Link>
                   </>
+                )}
+
+                {user.role === 'customer' && (
+                  <Link to="/dashboard" className="block w-full">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-center text-left flex items-center gap-2"
+                      onClick={closeMenu}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      My Dashboard
+                    </Button>
+                  </Link>
                 )}
 
                 <Button

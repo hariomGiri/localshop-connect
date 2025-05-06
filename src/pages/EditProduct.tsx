@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
@@ -10,22 +9,83 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
-import { ImageUp, Tag, PackageCheck } from 'lucide-react';
+import { ImageUp, Tag, PackageCheck, Loader2 } from 'lucide-react';
 
-const CreateProduct = () => {
+interface ProductData {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  stock: number;
+  imageUrl?: string;
+  isAvailableForDelivery: boolean;
+  isAvailableForPickup: boolean;
+}
+
+const EditProduct = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Partial<ProductData>>({
     name: '',
     description: '',
     category: '',
-    price: '',
-    stock: '',
+    price: 0,
+    stock: 0,
     isAvailableForDelivery: true,
     isAvailableForPickup: true
   });
+
+  // Fetch product data
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          toast({
+            title: "Authentication Error",
+            description: "You must be logged in to edit products",
+            variant: "destructive"
+          });
+          navigate('/login');
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5001/api/products/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? 'Failed to fetch product data');
+        }
+
+        setFormData(data.data);
+        if (data.data.imageUrl) {
+          setImagePreview(`http://localhost:5001/${data.data.imageUrl}`);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : 'Failed to fetch product data',
+          variant: "destructive"
+        });
+        navigate('/shopkeeper/dashboard');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -71,7 +131,7 @@ const CreateProduct = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        throw new Error('You must be logged in to create a product');
+        throw new Error('You must be logged in to update a product');
       }
 
       // Create FormData for file upload
@@ -79,14 +139,8 @@ const CreateProduct = () => {
 
       // Add all form fields to FormData
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && key !== 'shop') {
-          if (key === 'price' || key === 'stock') {
-            // Convert price and stock to numbers
-            const numValue = key === 'price' ? parseFloat(value as string) : parseInt(value as string);
-            productFormData.append(key, numValue.toString());
-          } else {
-            productFormData.append(key, value.toString());
-          }
+        if (value !== undefined && key !== '_id' && key !== 'shop') {
+          productFormData.append(key, value.toString());
         }
       });
 
@@ -95,8 +149,8 @@ const CreateProduct = () => {
         productFormData.append('image', selectedImage);
       }
 
-      const response = await fetch('http://localhost:5001/api/products', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:5001/api/products/${id}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -106,19 +160,19 @@ const CreateProduct = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message ?? 'Failed to create product');
+        throw new Error(data.message ?? 'Failed to update product');
       }
 
       toast({
-        title: "Product created",
-        description: "Your product has been created successfully",
+        title: "Product updated",
+        description: "Your product has been updated successfully",
       });
 
       navigate('/shopkeeper/dashboard');
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to create product',
+        description: error instanceof Error ? error.message : 'Failed to update product',
         variant: "destructive"
       });
     } finally {
@@ -126,14 +180,29 @@ const CreateProduct = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg">Loading product data...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
 
       <main className="flex-grow container max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Add New Product</h1>
-          <p className="text-gray-600">Create a new product listing for your shop</p>
+          <h1 className="text-3xl font-bold">Edit Product</h1>
+          <p className="text-gray-600">Update your product information</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -193,7 +262,7 @@ const CreateProduct = () => {
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Pricing & Inventory</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Price</Label>
                   <div className="relative">
@@ -226,22 +295,12 @@ const CreateProduct = () => {
                     />
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU/Barcode (Optional)</Label>
-                  <Input id="sku" placeholder="Product SKU or barcode" />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox id="track-inventory" />
-                <Label htmlFor="track-inventory">Track inventory for this product</Label>
               </div>
             </div>
 
             {/* Images */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Product Images</h2>
+              <h2 className="text-xl font-semibold">Product Image</h2>
 
               {imagePreview ? (
                 <div className="space-y-4">
@@ -298,14 +357,6 @@ const CreateProduct = () => {
               <h2 className="text-xl font-semibold">Additional Details</h2>
 
               <div className="space-y-2">
-                <Label htmlFor="tags">Tags (Comma separated)</Label>
-                <div className="relative">
-                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-                  <Input id="tags" className="pl-10" placeholder="organic, local, fresh" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Shipping & Delivery</Label>
                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                   <div className="flex items-center space-x-2">
@@ -334,7 +385,7 @@ const CreateProduct = () => {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Product'}
+                {isSubmitting ? 'Updating...' : 'Update Product'}
               </Button>
             </div>
           </form>
@@ -346,4 +397,4 @@ const CreateProduct = () => {
   );
 };
 
-export default CreateProduct;
+export default EditProduct;

@@ -13,22 +13,22 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Create subdirectories based on file type
     let uploadPath = uploadsDir;
-    
+
     if (file.fieldname === 'idProof') {
       uploadPath = path.join(uploadsDir, 'id-proofs');
     } else if (file.fieldname === 'businessDocument') {
       uploadPath = path.join(uploadsDir, 'business-docs');
-    } else if (file.fieldname.includes('product')) {
+    } else if (file.fieldname === 'image' || file.fieldname.includes('product')) {
       uploadPath = path.join(uploadsDir, 'products');
     } else if (file.fieldname.includes('shop')) {
       uploadPath = path.join(uploadsDir, 'shops');
     }
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
-    
+
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
@@ -45,7 +45,7 @@ const fileFilter = (req, file, cb) => {
   const allowedFileTypes = /jpeg|jpg|png|gif|pdf/;
   const ext = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedFileTypes.test(file.mimetype);
-  
+
   if (ext && mimetype) {
     return cb(null, true);
   } else {

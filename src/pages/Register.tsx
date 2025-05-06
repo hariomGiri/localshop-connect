@@ -29,6 +29,7 @@ const Register = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [errorMessage, setErrorMessage] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -58,6 +59,14 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(''); // Clear any previous error messages
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       if (activeTab === 'customer') {
@@ -69,7 +78,7 @@ const Register = () => {
           role: 'customer'
         };
 
-        const response = await fetch('http://localhost:5000/api/auth/register', {
+        const response = await fetch('http://localhost:5001/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -80,12 +89,19 @@ const Register = () => {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message ?? 'Registration failed');
+          // Handle specific error cases
+          if (response.status === 400 && data.message?.includes('already exists')) {
+            setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+          } else {
+            setErrorMessage(data.message ?? 'Registration failed. Please try again.');
+          }
+          return;
         }
 
         // Store token in localStorage
         if (data.token) {
           localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
         }
 
         toast({
@@ -93,7 +109,7 @@ const Register = () => {
           description: "Your account has been created. Welcome to ShowcaseConnect!",
         });
 
-        navigate('/');
+        navigate('/dashboard');
       } else if (activeTab === 'shop' && currentStep === 3) {
         // Register shopkeeper account first
         const userData = {
@@ -103,7 +119,7 @@ const Register = () => {
           role: 'shopkeeper'
         };
 
-        const userResponse = await fetch('http://localhost:5000/api/auth/register', {
+        const userResponse = await fetch('http://localhost:5001/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -114,12 +130,19 @@ const Register = () => {
         const userResponseData = await userResponse.json();
 
         if (!userResponse.ok) {
-          throw new Error(userResponseData.message ?? 'User registration failed');
+          // Handle specific error cases
+          if (userResponse.status === 400 && userResponseData.message?.includes('already exists')) {
+            setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+          } else {
+            setErrorMessage(userResponseData.message ?? 'User registration failed. Please try again.');
+          }
+          return;
         }
 
         // Store token in localStorage
         if (userResponseData.token) {
           localStorage.setItem('token', userResponseData.token);
+          localStorage.setItem('user', JSON.stringify(userResponseData.user));
 
           // Now register the shop with the token
           const shopData = new FormData();
@@ -144,29 +167,36 @@ const Register = () => {
             shopData.append('businessDocument', formData.businessDocument);
           }
 
-          const shopResponse = await fetch('http://localhost:5000/api/shops/register', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${userResponseData.token}`,
-            },
-            body: shopData,
-          });
+          try {
+            const shopResponse = await fetch('http://localhost:5001/api/shops/register', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${userResponseData.token}`,
+              },
+              body: shopData,
+            });
 
-          const shopResponseData = await shopResponse.json();
+            const shopResponseData = await shopResponse.json();
 
-          if (!shopResponse.ok) {
-            throw new Error(shopResponseData.message ?? 'Shop registration failed');
+            if (!shopResponse.ok) {
+              setErrorMessage(shopResponseData.message ?? 'Shop registration failed. Please try again.');
+              return;
+            }
+
+            toast({
+              title: "Registration successful!",
+              description: "Your shop has been created. We'll review your details shortly.",
+            });
+
+            navigate('/shopkeeper/dashboard');
+          } catch (shopError) {
+            setErrorMessage('Failed to register shop. Please try again later.');
           }
-
-          toast({
-            title: "Registration successful!",
-            description: "Your shop has been created. We'll review your details shortly.",
-          });
-
-          navigate('/shopkeeper/dashboard');
         }
       }
     } catch (error) {
+      setErrorMessage('An unexpected error occurred. Please try again later.');
+
       toast({
         title: "Registration failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -235,6 +265,12 @@ const Register = () => {
                     Create a customer account to discover and shop from local businesses in your area.
                   </p>
 
+                  {errorMessage && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+                      {errorMessage}
+                    </div>
+                  )}
+
                   <form onSubmit={handleSubmit} className="space-y-4 mt-8">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
@@ -257,6 +293,7 @@ const Register = () => {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Enter your email address"
+                        className={errorMessage?.includes('email') ? "border-red-300 focus-visible:ring-red-400" : ""}
                         required
                       />
                     </div>
@@ -271,6 +308,7 @@ const Register = () => {
                           value={formData.password}
                           onChange={handleChange}
                           placeholder="Create a password"
+                          className={errorMessage?.includes('password') ? "border-red-300 focus-visible:ring-red-400" : ""}
                           required
                         />
                       </div>
@@ -284,6 +322,7 @@ const Register = () => {
                           value={formData.confirmPassword}
                           onChange={handleChange}
                           placeholder="Confirm your password"
+                          className={errorMessage?.includes('password') ? "border-red-300 focus-visible:ring-red-400" : ""}
                           required
                         />
                       </div>
@@ -312,6 +351,12 @@ const Register = () => {
                   <p className="text-sm text-muted-foreground text-center max-w-md mx-auto">
                     Create your shop profile to showcase your products and connect with local customers.
                   </p>
+
+                  {errorMessage && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+                      {errorMessage}
+                    </div>
+                  )}
 
                   {/* Shop Registration Form with Steps */}
                   <div className="mt-8">

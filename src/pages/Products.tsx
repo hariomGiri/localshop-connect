@@ -99,7 +99,7 @@ const categories = ['All', 'Grocery', 'Electronics', 'Fashion', 'Books', 'Bakery
 
 const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
   const [isPrebooking, setPrebooking] = useState(false);
-  
+
   const handlePrebook = () => {
     setPrebooking(true);
     setTimeout(() => {
@@ -108,20 +108,20 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
       alert(`Successfully prebooked ${product.name}! We'll notify you when it's available.`);
     }, 1000);
   };
-  
+
   return (
     <Card className="overflow-hidden flex flex-col h-full">
       <div className="h-48 overflow-hidden">
-        <img 
-          src={product.imageUrl} 
-          alt={product.name} 
+        <img
+          src={product.imageUrl}
+          alt={product.name}
           className="w-full h-full object-cover transform transition hover:scale-105"
         />
       </div>
       <CardContent className="py-4 flex-grow">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-semibold text-lg line-clamp-1">{product.name}</h3>
-          <span className="font-bold text-primary">${product.price.toFixed(2)}</span>
+          <span className="font-bold text-primary">₹{product.price.toFixed(2)}</span>
         </div>
         <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{product.description}</p>
         <div className="flex justify-between items-center mb-3">
@@ -144,8 +144,8 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
             {product.inStock ? 'Add to Cart' : 'View Details'}
           </Button>
           {!product.inStock && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={handlePrebook}
               disabled={isPrebooking}
@@ -162,22 +162,22 @@ const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-  
+
   const filteredProducts = mockProducts.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-  
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
+
       <main className="flex-grow pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-12 text-center">
@@ -186,14 +186,14 @@ const Products = () => {
               Discover unique products from local shops in your area
             </p>
           </div>
-          
+
           {/* Search and filter bar */}
           <div className="bg-white rounded-xl shadow-sm border p-4 mb-8">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input 
-                  placeholder="Search products by name or description..." 
+                <Input
+                  placeholder="Search products by name or description..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={handleSearch}
@@ -204,11 +204,11 @@ const Products = () => {
                 Filters
               </Button>
             </div>
-            
+
             {/* Categories */}
             <div className="flex flex-wrap gap-2 mt-4">
               {categories.map((category) => (
-                <Button 
+                <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   size="sm"
@@ -220,7 +220,7 @@ const Products = () => {
               ))}
             </div>
           </div>
-          
+
           {/* Product listings */}
           {filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -236,7 +236,7 @@ const Products = () => {
           )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

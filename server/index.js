@@ -4,18 +4,32 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from the .env file in the same directory as this file
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Log environment variables for debugging
+console.log('Environment variables loaded:');
+console.log('PORT:', process.env.PORT);
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('JWT_EXPIRES_IN:', process.env.JWT_EXPIRES_IN);
 
 // Import routes
 import authRoutes from './routes/auth.js';
 import shopRoutes from './routes/shop.js';
 import adminRoutes from './routes/admin.js';
-
-// Load environment variables
-dotenv.config();
+import orderRoutes from './routes/order.js';
+import productRoutes from './routes/product.js';
 
 // Initialize express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; // Changed from 5000 to 5001
 
 // Middleware
 app.use(cors());
@@ -42,6 +56,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/localshop
 app.use('/api/auth', authRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

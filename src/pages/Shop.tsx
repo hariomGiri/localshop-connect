@@ -395,7 +395,7 @@ const Shop = () => {
                               <p className="text-muted-foreground">{product.category}</p>
                             </div>
                             <div className="flex items-center justify-between mt-4">
-                              <p className="text-xl font-semibold text-primary">${product.price.toFixed(2)}</p>
+                              <p className="text-xl font-semibold text-primary">₹{product.price.toFixed(2)}</p>
                               <Button
                                 className="w-auto"
                                 disabled={!product.inStock}

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ShopCard from '@/components/ShopCard';
+import ShopCard, { Shop } from '@/components/ShopCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, MapPin } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { shopAPI } from '@/lib/api';
 
 // Mock shop data with all required properties according to Shop type
 const mockShops = [
@@ -105,19 +107,73 @@ const categories = ['All', 'Grocery', 'Electronics', 'Fashion', 'Books', 'Bakery
 const Shops = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('distance');
-  
-  const filteredShops = mockShops.filter(shop => {
-    const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          shop.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch shops from API
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        setLoading(true);
+        const response = await shopAPI.getShops();
+
+        if (response.success && response.data) {
+          // Transform API data to match Shop interface
+          const apiShops = response.data.map((shop: any) => ({
+            id: shop._id,
+            name: shop.name,
+            imageUrl: shop.imageUrl ?? 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Default image if none provided
+            rating: shop.rating ?? 4.5,
+            reviewCount: shop.reviewCount ?? 0,
+            category: shop.category,
+            distance: '1.0 miles', // This would need to be calculated based on user location
+            address: shop.address?.street ? `${shop.address.street}, ${shop.address.city}` : 'Address not available',
+            isOpen: true, // This would need to be determined based on shop hours
+            products: shop.productCount ?? 0,
+            tags: shop.tags ?? [shop.category]
+          }));
+
+          setShops(apiShops);
+        } else {
+          // If API call fails, use mock data as fallback
+          setShops(mockShops);
+
+          toast({
+            title: "Notice",
+            description: "Using demo data as we couldn't fetch shops from the server",
+            variant: "default"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching shops:", error);
+        // Use mock data as fallback
+        setShops(mockShops);
+
+        toast({
+          title: "Error",
+          description: "Failed to load shops. Using demo data instead.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
+  }, [toast]);
+
+  // Filter shops based on search term and category
+  const filteredShops = shops.filter(shop => {
+    const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || shop.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-  
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
+
       <main className="flex-grow pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-12 text-center">
@@ -126,14 +182,14 @@ const Shops = () => {
               Find and support local businesses in your area. Compare products, read reviews, and shop with confidence.
             </p>
           </div>
-          
+
           {/* Search and filter bar */}
           <div className="bg-white rounded-xl shadow-sm border p-4 mb-8">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input 
-                  placeholder="Search shops by name or product..." 
+                <Input
+                  placeholder="Search shops by name or product..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -148,11 +204,11 @@ const Shops = () => {
                 Filters
               </Button>
             </div>
-            
+
             {/* Categories */}
             <div className="flex flex-wrap gap-2 mt-4">
               {categories.map((category) => (
-                <Button 
+                <Button
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   size="sm"
@@ -164,15 +220,27 @@ const Shops = () => {
               ))}
             </div>
           </div>
-          
+
+          {/* Loading state */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" aria-hidden="true">
+              </div>
+              <p className="mt-4 text-xl text-gray-500">Loading shops...</p>
+            </div>
+          )}
+
           {/* Shop listings */}
-          {filteredShops.length > 0 ? (
+          {!loading && filteredShops.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredShops.map((shop) => (
                 <ShopCard key={shop.id} shop={shop} />
               ))}
             </div>
-          ) : (
+          )}
+
+          {/* No results */}
+          {!loading && filteredShops.length === 0 && (
             <div className="text-center py-16">
               <p className="text-xl text-gray-500">No shops found matching your criteria.</p>
               <p className="text-gray-400 mt-2">Try adjusting your search or filter settings.</p>
@@ -180,7 +248,7 @@ const Shops = () => {
           )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
