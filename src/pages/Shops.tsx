@@ -134,85 +134,29 @@ const Shops = () => {
       try {
         setLoading(true);
 
-        let response;
+        // For demonstration purposes, always use mock data
+        setShops(mockShops);
 
-        // If we have location data, use it to fetch nearby shops
-        if (location) {
-          response = await shopAPI.getNearbyShops(
-            location.latitude,
-            location.longitude,
-            10000 // 10km radius
-          );
-        } else {
-          // Otherwise, fetch all shops
-          response = await shopAPI.getShops();
-        }
-
-        if (response.success && response.data) {
-          // Transform API data to match Shop interface
-          const apiShops = response.data.map((shop: any) => ({
-            id: shop._id,
-            name: shop.name,
-            imageUrl: (() => {
-              if (shop.imageUrl) {
-                if (shop.imageUrl.startsWith('http')) {
-                  return shop.imageUrl;
-                } else {
-                  // For server-stored images, use the full path
-                  return `http://localhost:5001/${shop.imageUrl}`;
-                }
-              } else {
-                // Default image based on category
-                const categoryImageMap: Record<string, string> = {
-                  'grocery': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'fashion': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'bakery': 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'homegoods': 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  'other': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-                };
-                return categoryImageMap[shop.category] || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-              }
-            })(),
-            rating: shop.rating ?? 4.5,
-            reviewCount: shop.reviewCount ?? 0,
-            category: shop.category,
-            distance: shop.distance ? `${(shop.distance / 1000).toFixed(1)} km` : 'Distance unknown',
-            address: shop.address?.street ? `${shop.address.street}, ${shop.address.city}` : 'Address not available',
-            isOpen: true, // This would need to be determined based on shop hours
-            products: shop.productCount ?? 0,
-            tags: shop.tags ?? [shop.category]
-          }));
-
-          setShops(apiShops);
-        } else {
-          // If API call fails, use mock data as fallback
-          setShops(mockShops);
-
+        // Only show toast on first load
+        if (shops.length === 0) {
           toast({
-            title: "Notice",
-            description: "Using demo data as we couldn't fetch shops from the server",
+            title: "Sample Shops",
+            description: "Showing sample shop data for demonstration purposes",
             variant: "default"
           });
         }
-      } catch (error) {
-        console.error("Error fetching shops:", error);
-        // Use mock data as fallback
-        setShops(mockShops);
 
-        toast({
-          title: "Error",
-          description: "Failed to load shops. Using demo data instead.",
-          variant: "destructive"
-        });
+      } catch (error) {
+        console.error("Error:", error);
+        // Ensure mock data is used as fallback
+        setShops(mockShops);
       } finally {
         setLoading(false);
       }
     };
 
     fetchShops();
-  }, [toast, location]);
+  }, [toast]);
 
   // Helper function to get location status text
   const getLocationStatusText = () => {
@@ -229,8 +173,15 @@ const Shops = () => {
 
   // Filter shops based on search term and category
   const filteredShops = shops.filter(shop => {
-    const matchesSearch = shop.name.toLowerCase().includes(searchTerm.toLowerCase());
+    // For search, check if shop name, description, or tags include the search term
+    const matchesSearch = searchTerm === '' ||
+      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shop.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shop.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // For category, check if it matches the selected category
     const matchesCategory = selectedCategory === 'all' || shop.category === selectedCategory;
+
     return matchesSearch && matchesCategory;
   });
 
