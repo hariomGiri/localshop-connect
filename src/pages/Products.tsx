@@ -1,20 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Tag } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from '@/components/ui/badge';
-import { getProductFallbackImage } from '@/utils/imageUtils';
+import { Search, Filter } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import ProductCard, { Product } from '@/components/ProductCard';
+import { productAPI } from '@/lib/api';
+import { getImageUrl } from '@/utils/imageUtils';
 
-// Mock product data
-const mockProducts = [
+// Mock product data for fallback
+const mockProducts: Product[] = [
   {
     id: '1',
     name: 'Organic Fresh Vegetables Bundle',
@@ -98,87 +96,106 @@ const mockProducts = [
 // Categories
 const categories = ['All', 'Grocery', 'Electronics', 'Fashion', 'Books', 'Bakery', 'Home & Garden'];
 
-const ProductCard = ({ product }: { product: typeof mockProducts[0] }) => {
-  const [isPrebooking, setPrebooking] = useState(false);
-
-  const handlePrebook = () => {
-    setPrebooking(true);
-    setTimeout(() => {
-      setPrebooking(false);
-      // Simulate successful prebooking
-      alert(`Successfully prebooked ${product.name}! We'll notify you when it's available.`);
-    }, 1000);
-  };
-
-  return (
-    <Card className="overflow-hidden flex flex-col h-full">
-      <div className="h-48 overflow-hidden">
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="w-full h-full object-cover transform transition hover:scale-105"
-          onError={(e) => {
-            // If image fails to load, use a category-specific fallback image
-            const target = e.target as HTMLImageElement;
-            target.onerror = null; // Prevent infinite loop
-
-            // Use the utility function to get a category-specific fallback image
-            target.src = getProductFallbackImage(product.category);
-          }}
-        />
-      </div>
-      <CardContent className="py-4 flex-grow">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-lg line-clamp-1">{product.name}</h3>
-          <span className="font-bold text-primary">₹{product.price.toFixed(2)}</span>
-        </div>
-        <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{product.description}</p>
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-medium">{product.shop}</span>
-          <span className="flex items-center text-sm">
-            ★ {product.rating}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1 mt-auto">
-          {product.tags.map(tag => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className="border-t pt-4 px-6 pb-6">
-        <div className="w-full flex gap-2">
-          <Button className="flex-1">
-            {product.inStock ? 'Add to Cart' : 'View Details'}
-          </Button>
-          {!product.inStock && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handlePrebook}
-              disabled={isPrebooking}
-            >
-              {isPrebooking ? 'Processing...' : 'Pre-book'}
-            </Button>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
-  );
-};
-
 const Products = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        // Attempt to fetch products from API
+        const response = await productAPI.getProducts();
+
+        if (response.success && response.data) {
+          // Transform API data to match Product interface
+          const apiProducts = response.data.map((product: any) => {
+            // Use the utility function to handle image URL properly with cache busting
+            const imageUrl = getImageUrl(product.imageUrl, product.category, 'product', true);
+
+            return {
+              id: product._id,
+              name: product.name,
+              description: product.description,
+              imageUrl: imageUrl,
+              price: product.price,
+              shop: product.shop?.name ?? 'Local Shop',
+              shopId: product.shop?._id ?? '1',
+              category: product.category,
+              inStock: product.inStock,
+              rating: 4.5, // Default rating if not provided
+              tags: product.tags ?? [product.category]
+            };
+          });
+
+          setProducts(apiProducts);
+        } else {
+          // If API call fails, use mock data as fallback
+          setProducts(mockProducts);
+
+          toast({
+            title: "Notice",
+            description: "Using demo product data as we couldn't fetch from the server",
+            variant: "default"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        // Use mock data as fallback
+        setProducts(mockProducts);
+
+        toast({
+          title: "Error",
+          description: "Failed to load products. Using demo data instead.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [toast]);
+
+  // Initialize search term and category from URL parameters when component mounts
+  useEffect(() => {
+    // Handle search parameter
+    const searchFromUrl = searchParams.get('search');
+    if (searchFromUrl) {
+      setSearchTerm(searchFromUrl);
+    }
+
+    // Handle category parameter
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl && categories.includes(categoryFromUrl)) {
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, [searchParams]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    const newValue = e.target.value;
+    setSearchTerm(newValue);
+
+    // Update URL search parameters
+    const newParams = new URLSearchParams(searchParams);
+    if (newValue) {
+      newParams.set('search', newValue);
+    } else {
+      newParams.delete('search');
+    }
+    setSearchParams(newParams);
   };
 
-  const filteredProducts = mockProducts.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = searchTerm === '' ||
+                         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -221,7 +238,18 @@ const Products = () => {
                   key={category}
                   variant={selectedCategory === category ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => {
+                    setSelectedCategory(category);
+
+                    // Update URL category parameter
+                    const newParams = new URLSearchParams(searchParams);
+                    if (category !== 'All') {
+                      newParams.set('category', category);
+                    } else {
+                      newParams.delete('category');
+                    }
+                    setSearchParams(newParams);
+                  }}
                   className="rounded-full"
                 >
                   {category}
@@ -230,19 +258,28 @@ const Products = () => {
             </div>
           </div>
 
+          {/* Loading state */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" aria-hidden="true">
+              </div>
+              <p className="mt-4 text-lg font-medium">Loading products...</p>
+            </div>
+          )}
+
           {/* Product listings */}
-          {filteredProducts.length > 0 ? (
+          {!loading && filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : (
+          ) : !loading ? (
             <div className="text-center py-16">
               <p className="text-xl text-gray-500">No products found matching your criteria.</p>
               <p className="text-gray-400 mt-2">Try adjusting your search or filter settings.</p>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
 

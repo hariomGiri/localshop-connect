@@ -107,7 +107,7 @@ const Navbar = () => {
   return (
     <nav
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 px-6 md:px-8',
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-2 px-6 md:px-8',
         scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
       )}
     >
@@ -115,13 +115,13 @@ const Navbar = () => {
         {/* Logo */}
         <Link
           to="/"
-          className="flex items-center space-x-2"
+          className="flex items-center mr-4"
           aria-label="ShowcaseConnect"
         >
           <img
             src="/logo.png"
             alt="ShowcaseConnect Logo"
-            className="h-16 w-auto"
+            className="h-10 md:h-16 w-auto"
           />
         </Link>
 
@@ -284,28 +284,39 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          type="button"
-          className="md:hidden p-2 rounded-md"
-          onClick={toggleMenu}
-          aria-expanded={isOpen}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? (
-            <X className="h-6 w-6" aria-hidden="true" />
-          ) : (
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          )}
-        </button>
+        <div className="flex items-center md:hidden">
+          <CartIcon />
+          <button
+            type="button"
+            className="p-2 rounded-md ml-2"
+            onClick={toggleMenu}
+            aria-expanded={isOpen}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? (
+              <X className="h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
       <div
         className={cn(
-          "fixed inset-0 flex flex-col bg-white z-40 px-6 pt-20 pb-6 md:hidden transition-transform duration-300 ease-in-out",
+          "fixed inset-0 flex flex-col bg-white z-40 px-6 pt-16 pb-6 md:hidden transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
+        {/* Mobile Logo */}
+        <div className="flex justify-center mb-4">
+          <img
+            src="/logo.png"
+            alt="ShowcaseConnect Logo"
+            className="h-12 w-auto"
+          />
+        </div>
         {/* Mobile Search */}
         <form onSubmit={handleSearch} className="mb-6">
           <div className="relative">

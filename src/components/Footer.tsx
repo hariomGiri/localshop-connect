@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom';
 import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
+  Share2,
+  MessageCircle,
+  Image,
+  Link2,
   Mail,
   Phone,
-  MapPin,
-  ShoppingBag
+  MapPin
 } from 'lucide-react';
 
 const Footer = () => {
@@ -23,7 +22,7 @@ const Footer = () => {
                 <img
                   src="/logo.png"
                   alt="ShowcaseConnect Logo"
-                  className="h-10 w-auto"
+                  className="h-20 w-auto"
                 />
               </div>
             </div>
@@ -32,16 +31,16 @@ const Footer = () => {
             </p>
             <div className="flex items-center space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary transition-colors">
-                <Facebook size={20} />
+                <Share2 size={20} />
               </a>
               <a href="#" className="text-gray-400 hover:text-primary transition-colors">
-                <Twitter size={20} />
+                <MessageCircle size={20} />
               </a>
               <a href="#" className="text-gray-400 hover:text-primary transition-colors">
-                <Instagram size={20} />
+                <Image size={20} />
               </a>
               <a href="#" className="text-gray-400 hover:text-primary transition-colors">
-                <Linkedin size={20} />
+                <Link2 size={20} />
               </a>
             </div>
           </div>

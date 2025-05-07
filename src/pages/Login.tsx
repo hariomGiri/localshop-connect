@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag } from 'lucide-react';
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -87,7 +87,7 @@ const Login = () => {
             <img
               src="/logo.png"
               alt="ShowcaseConnect Logo"
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
           <h2 className="mt-4 text-3xl font-bold text-gray-900 font-display">
